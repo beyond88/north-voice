@@ -51,8 +51,6 @@ class NewsHunter:
         for district in self.districts:
             if district in text:
                 return district
-        if "উত্তরবঙ্গ" in text:
-            return "উত্তরবঙ্গ"
         return None
 
     def fetch_candidates(self) -> List[Dict]:
@@ -62,14 +60,8 @@ class NewsHunter:
 
         for feed_url in RSS_FEEDS:
             try:
-                logger.info(f"Scanning feed: {feed_url[:50]}...")
                 feed = feedparser.parse(feed_url)
-                source_title = feed.feed.get("title", "অনলাইন ডেস্ক")
-                # Clean up source title
-                if "Google" in source_title:
-                    source_title = "অনলাইন ডেস্ক"
-                elif " - " in source_title:
-                    source_title = source_title.split(" - ")[0]
+                default_source = feed.feed.get("title", "অনলাইন ডেস্ক")
 
                 for entry in feed.entries:
                     link = entry.get("link", "").strip()
@@ -77,9 +69,24 @@ class NewsHunter:
                         continue
                     seen_links.add(link)
 
-                    title = self.clean_html(entry.get("title", ""))
+                    raw_title = self.clean_html(entry.get("title", ""))
                     summary = self.clean_html(entry.get("summary", "") or entry.get("description", ""))
 
+                    # Extract actual media house / TV channel source name
+                    source_title = default_source
+                    if "source" in entry and isinstance(entry["source"], dict) and entry["source"].get("title"):
+                        source_title = entry["source"]["title"]
+
+                    # Clean trailing " - Media House" from headline if present
+                    title = raw_title
+                    if " - " in title:
+                        parts = title.rsplit(" - ", 1)
+                        if len(parts) == 2 and len(parts[1]) < 30:
+                            title = parts[0].strip()
+                            if not source_title or "Google" in source_title or source_title == "অনলাইন ডেস্ক":
+                                source_title = parts[1].strip()
+
+                    # Filter for North Bengal relevance
                     full_text = f"{title} {summary}"
                     matched_district = self.match_district(full_text)
 
