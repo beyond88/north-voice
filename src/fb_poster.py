@@ -52,7 +52,10 @@ class FacebookPoster:
                     return post_id
                 else:
                     err_msg = data.get("error", {}).get("message", "")
-                    if "pages_manage_posts" in err_msg or "(#200)" in err_msg:
+                    err_code = data.get("error", {}).get("code")
+                    if "Session has expired" in err_msg or err_code == 190:
+                        logger.error("🚨 FACEBOOK TOKEN EXPIRED: Your FB_PAGE_ACCESS_TOKEN has expired! Please generate a Permanent Page Access Token (Expires: Never).")
+                    elif "pages_manage_posts" in err_msg or "(#200)" in err_msg:
                         logger.error("🚨 FACEBOOK PERMISSION ERROR: Your Facebook Token does not have 'pages_manage_posts' permission! Please generate a Page Access Token with 'pages_manage_posts' and 'pages_read_engagement'.")
                     logger.error(f"Facebook Graph API Error ({response.status_code}): {data}")
                     return None
