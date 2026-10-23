@@ -37,6 +37,7 @@ class FacebookPoster:
             with open(image_path, "rb") as img_file:
                 payload = {
                     "caption": caption,
+                    "published": "true",
                     "access_token": self.access_token
                 }
                 files = {
