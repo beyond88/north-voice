@@ -125,7 +125,9 @@ class CardGenerator:
         """
         os.makedirs(output_dir, exist_ok=True)
         template_name = news_data.get("template", "breaking")
-        if template_name not in ("breaking", "quote", "general", "inqilab", "inqilab_style"):
+        if template_name in ("inqilab", "inqilab_style"):
+            template_name = "inqilab_style"
+        elif template_name not in ("breaking", "quote", "general"):
             template_name = "breaking"
 
         template_file = f"{template_name}.html"

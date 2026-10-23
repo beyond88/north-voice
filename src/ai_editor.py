@@ -19,9 +19,37 @@ class AIEditor:
         else:
             logger.warning("GEMINI_API_KEY not found. Running with rule-based fallback editor.")
 
+    def fallback_analyze(self, title: str, summary: str, source: str, district: str) -> Dict:
+        """Intelligently routes news to all 4 templates even in fallback mode."""
+        full_text = f"{title} {summary}"
+
+        # 1. Breaking (Red Banner)
+        if any(w in full_text for w in ["নিহত", "আহত", "দুর্ঘটনা", "গ্রেপ্তার", "আটক", "আগুন", "ডাকাতি", "ধর্ষন", "খুন", "অবরোধ"]):
+            template = "breaking"
+        # 2. Quote Card (Dark Editorial)
+        elif any(w in full_text for w in ["বলেন", "মন্তব্য", "দাবি করেন", "হুশিয়ারি", "উক্তি", "ঘোষণা"]):
+            template = "quote"
+        # 3. Inqilab Style (Politics, bilateral, governance)
+        elif any(w in full_text for w in ["রাজনীতি", "সীমান্ত", "তিস্তা", "নির্বাচন", "বিএনপি", "জামায়াত", "সরকার", "আন্দোলন"]):
+            template = "inqilab_style"
+        # 4. General (Agriculture, economics, feature)
+        else:
+            template = "general"
+
+        return {
+            "is_relevant": True,
+            "template": template,
+            "headline_html": title,
+            "sub_headline": f"{district} বার্তা",
+            "speaker_name": "",
+            "speaker_title": "",
+            "fb_caption": f"📌 {title}\n\n{summary[:250]}...\n\nসূত্র: {source}\n\n#NorthVoice #উত্তরবঙ্গ #{district} #NorthBengalNews",
+            "district": district
+        }
+
     def analyze_news(self, news_item: Dict) -> Optional[Dict]:
         """
-        Uses Gemini to filter, choose template, generate Bengali headline and Facebook caption.
+        Uses Gemini 3.8 Flash to analyze news and pick the optimal template out of all 4 designs.
         """
         title = news_item.get("title", "")
         summary = news_item.get("summary", "")
@@ -29,21 +57,11 @@ class AIEditor:
         district = news_item.get("district", "উত্তরবঙ্গ")
 
         if not self.client:
-            # Fallback heuristic if no Gemini API key is configured yet
-            return {
-                "is_relevant": True,
-                "template": "breaking" if any(w in title for w in ["নিহত", "আহত", "দুর্ঘটনা", "গ্রেপ্তার", "আটক", "আগুন"]) else "general",
-                "headline_html": f"{title}",
-                "sub_headline": f"{district} বার্তা",
-                "speaker_name": "",
-                "speaker_title": "",
-                "fb_caption": f"📌 {title}\n\nবিস্তারিত: {summary}\n\nসূত্র: {source}\n\n#NorthVoice #উত্তরবঙ্গ #{district} #NorthBengalNews",
-                "district": district
-            }
+            return self.fallback_analyze(title, summary, source, district)
 
         prompt = f"""
 তুমি 'North Voice' (উত্তরবঙ্গের জনপ্রিয় ডিজিটাল নিউজ পেইজ)-এর চিফ এডিটর।
-নিচের সংবাদের তথ্য বিশ্লেষণ করে আকর্ষণীয় ফটোকার্ডের কনটেন্ট ও ফেসবুক পোস্ট তৈরি করো।
+নিচের সংবাদের তথ্য বিশ্লেষণ করে সবচেয়ে মানানসই ফটোকার্ডের কনটেন্ট ও ফেসবুক পোস্ট তৈরি করো।
 
 সংবাদের তথ্য:
 - শিরোনাম: {title}
@@ -52,23 +70,28 @@ class AIEditor:
 - সূত্র: {source}
 
 তোমার করণীয়:
-1. সংবাদের গুরুত্ব অনুযায়ী টেমপ্লেট বেছে নাও:
-   - 'breaking': দুর্ঘটনা, অগ্নিকাণ্ড, ক্রাইম, অভিযান, হঠাৎ কোনো গুরুত্বপূর্ণ ঘোষণা বা সাধারণ বড় সংবাদ।
-   - 'quote': যদি কোনো ব্যক্তি, নেতা বা কর্মকর্তার উক্তি বা বক্তব্য থাকে।
-   - 'general': উন্নয়ন, কৃষি, পর্যটন, শিক্ষা, সংস্কৃতি বা সাধারণ প্রতিবেদন।
-2. ফটোকার্ডের জন্য অত্যন্ত আকর্ষণীয়, সংক্ষিপ্ত (২-৩ লাইন) এবং সত্যনিষ্ঠ বাংলা হেডলাইন তৈরি করো।
-   সবচেয়ে গুরুত্বপূর্ণ শব্দগুচ্ছকে <span class="highlight">শব্দ</span> ট্যাগ দিয়ে ঘিরে দাও যাতে তা আলাদা রঙে ফোকাস পায়।
-3. ফেসবুক পোস্টের জন্য একটি সুন্দর ক্যাপশন বানাও যাতে থাকবে: মূল বিষয়বস্তু, প্রাসঙ্গিক হ্যাশট্যাগ (#NorthVoice #উত্তরবঙ্গ #{district} ইত্যাদি) এবং সূত্রের কৃতজ্ঞতা।
+১. সংবাদের বিষয়বস্তুর ধরন অনুযায়ী নিচের ৪টি ডিজাইনের মধ্যে সবচেয়ে পারফেক্ট টেমপ্লেটটি নির্বাচন করো:
+   - 'breaking': দুর্ঘটনা, অগ্নিকাণ্ড, ক্রাইম, অভিযান, মৃত্যু, মহাসড়ক অবরোধ বা হঠাৎ ঘটা ব্রেকিং নিউজ (Star News Red Banner Style)।
+   - 'quote': কোনো নেতা, কর্মকর্তা, ডিসি, এসপি, মন্ত্রী বা বিশিষ্ট ব্যক্তির সরাসরি উক্তি, মন্তব্য বা কড়া বক্তব্য (Rongo Graph / Dark Quote Card Style)।
+   - 'general': কৃষি, উন্নয়ন, অর্থনীতি, ফসল (আম, লিচু, আলু, ধান), নদী, দ্রব্যমূল্য, শিক্ষা, পর্যটন বা সাধারণ ফিচার সংবাদ (Channel 24 Cream Paper Style)।
+   - 'inqilab_style': রাজনীতি, জাতীয় বনাম আঞ্চলিক তুলনা, তিস্তা বা সীমান্ত ইস্যু, নীতি নির্ধারণ, রাজনৈতিক বিতর্ক বা পরিবর্তনের খবর (Daily Inqilab Style)।
 
-নিচের JSON ফরম্যাটে উত্তর প্রদান করো (অন্য কোনো টেক্সট বা মার্কডাউন ছাড়া):
+২. ফটোকার্ডের জন্য অত্যন্ত আকর্ষণীয়, সংক্ষিপ্ত (২-৩ লাইন) এবং পাঠযোগ্য বাংলা হেডলাইন তৈরি করো।
+   সবচেয়ে গুরুত্বপূর্ণ ১-২টি শব্দগুচ্ছকে <span class="highlight">শব্দ</span> ট্যাগ দিয়ে ঘিরে দাও যাতে তা আলাদা রঙে উজ্জ্বল ফোকাস পায়।
+
+৩. টেমপ্লেট যদি 'quote' হয়, তবে সংবাদের ভেতর থেকে বক্তার নাম (speaker_name) এবং পদবি (speaker_title) আলাদা করো।
+
+৪. ফেসবুক পোস্টের জন্য একটি চমৎকার পূর্ণাঙ্গ ক্যাপশন বানাও যাতে থাকবে: মূল বিষয়বস্তু, প্রাসঙ্গিক হ্যাশট্যাগ (#NorthVoice #উত্তরবঙ্গ #{district} ইত্যাদি) এবং সূত্রের কৃতজ্ঞতা।
+
+নিচের JSON ফরম্যাটে সরাসরি উত্তর প্রদান করো (অন্য কোনো টেক্সট বা ব্যাকটিক ছাড়া):
 {{
   "is_relevant": true,
-  "template": "breaking",
-  "headline_html": "বগুড়ায় মহাসড়কে <span class='highlight'>তীব্র যানজট</span>, ভোগান্তিতে হাজারো যাত্রী",
-  "sub_headline": "বগুড়া বার্তা",
-  "speaker_name": "",
-  "speaker_title": "",
-  "fb_caption": "ক্যাপশন টেক্সট...",
+  "template": "breaking" | "quote" | "general" | "inqilab_style",
+  "headline_html": "হেডলাইন টেক্সট <span class='highlight'>হাইলাইট</span> সহ...",
+  "sub_headline": "সাব-হেডলাইন (প্রযোজ্য ক্ষেত্রে)",
+  "speaker_name": "বক্তার নাম (শুধুমাত্র quote টেমপ্লেটে)",
+  "speaker_title": "বক্তার পদবি (শুধুমাত্র quote টেমপ্লেটে)",
+  "fb_caption": "ফেসবুক ক্যাপশন টেক্সট...",
   "district": "{district}"
 }}
 """
@@ -83,17 +106,8 @@ class AIEditor:
                 )
             )
             data = json.loads(response.text)
-            logger.info(f"AI Editor selected template: {data.get('template')} for '{title[:30]}...'")
+            logger.info(f"AI Editor selected template: '{data.get('template')}' for '{title[:30]}...'")
             return data
         except Exception as e:
-            logger.error(f"Gemini API error: {e}. Falling back to default editor.")
-            return {
-                "is_relevant": True,
-                "template": "breaking",
-                "headline_html": title,
-                "sub_headline": f"{district} বার্তা",
-                "speaker_name": "",
-                "speaker_title": "",
-                "fb_caption": f"{title}\n\nসূত্র: {source}\n\n#NorthVoice #উত্তরবঙ্গ",
-                "district": district
-            }
+            logger.error(f"Gemini API error: {e}. Using intelligent fallback.")
+            return self.fallback_analyze(title, summary, source, district)
