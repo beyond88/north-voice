@@ -29,16 +29,71 @@ def get_bangla_date() -> str:
     return f"{day} {month} {year}"
 
 def to_data_uri(file_path: str) -> str:
-    """Converts a local image file to a base64 Data URI so it renders flawlessly in headless browser."""
+    """Converts a local file (image/font) to a base64 Data URI."""
     if not file_path or not os.path.exists(file_path):
         return ""
     ext = os.path.splitext(file_path)[1].lower().replace(".", "")
-    if ext == "jpg":
-        ext = "jpeg"
-    mime = f"image/{ext}" if ext in ("jpeg", "png", "webp", "gif", "svg+xml") else "image/jpeg"
+    if ext in ("jpg", "jpeg"):
+        mime = "image/jpeg"
+    elif ext == "png":
+        mime = "image/png"
+    elif ext == "webp":
+        mime = "image/webp"
+    elif ext == "ttf":
+        mime = "font/truetype"
+    elif ext == "woff2":
+        mime = "font/woff2"
+    elif ext == "svg":
+        mime = "image/svg+xml"
+    else:
+        mime = "application/octet-stream"
+        
     with open(file_path, "rb") as f:
         b64 = base64.b64encode(f.read()).decode("utf-8")
     return f"data:{mime};base64,{b64}"
+
+def get_embedded_fonts() -> str:
+    """Embeds SolaimanLipi, Kalpurush, and AnekBangla as base64 CSS @font-face rules."""
+    solaiman_bold = to_data_uri("assets/fonts/SolaimanLipi-Bold.ttf")
+    solaiman_norm = to_data_uri("assets/fonts/SolaimanLipi.ttf")
+    kalpurush = to_data_uri("assets/fonts/Kalpurush.ttf")
+    anek = to_data_uri("assets/fonts/AnekBangla.ttf")
+
+    styles = []
+    if solaiman_bold:
+        styles.append(f"""
+        @font-face {{
+            font-family: 'SolaimanLipi';
+            font-weight: 700;
+            font-style: normal;
+            src: url('{solaiman_bold}') format('truetype');
+        }}""")
+    if solaiman_norm:
+        styles.append(f"""
+        @font-face {{
+            font-family: 'SolaimanLipi';
+            font-weight: 400;
+            font-style: normal;
+            src: url('{solaiman_norm}') format('truetype');
+        }}""")
+    if kalpurush:
+        styles.append(f"""
+        @font-face {{
+            font-family: 'Kalpurush';
+            font-weight: 400 900;
+            font-style: normal;
+            src: url('{kalpurush}') format('truetype');
+        }}""")
+    if anek:
+        styles.append(f"""
+        @font-face {{
+            font-family: 'AnekBangla';
+            font-weight: 600 800;
+            font-style: normal;
+            src: url('{anek}') format('truetype');
+        }}""")
+
+    return "\n".join(styles)
 
 class CardGenerator:
     def __init__(self, template_dir: str = "templates", assets_dir: str = "assets/branding"):
@@ -46,8 +101,8 @@ class CardGenerator:
         self.assets_dir = os.path.abspath(assets_dir)
         self.env = Environment(loader=FileSystemLoader(self.template_dir))
 
-        # Default fallback image
         self.logo_path = os.path.join(self.assets_dir, "logo.png")
+        self.font_styles = get_embedded_fonts()
 
     def download_image(self, url: str, output_path: str) -> bool:
         """Downloads external news image with proper user-agent headers."""
@@ -70,7 +125,7 @@ class CardGenerator:
         """
         os.makedirs(output_dir, exist_ok=True)
         template_name = news_data.get("template", "breaking")
-        if template_name not in ("breaking", "quote", "general"):
+        if template_name not in ("breaking", "quote", "general", "inqilab", "inqilab_style"):
             template_name = "breaking"
 
         template_file = f"{template_name}.html"
@@ -86,15 +141,15 @@ class CardGenerator:
         image_url = news_data.get("image_url")
         final_image_path = None
 
-        if image_url and self.download_image(image_url, temp_img_path):
-            final_image_path = os.path.abspath(temp_img_path)
+        if image_url and (os.path.exists(image_url) or self.download_image(image_url, temp_img_path)):
+            final_image_path = os.path.abspath(image_url if os.path.exists(image_url) else temp_img_path)
         else:
-            # Fallback to branding logo or cover background
             final_image_path = os.path.abspath(self.logo_path)
 
         logo_abs_path = os.path.abspath(self.logo_path)
 
         render_data = {
+            "font_styles": self.font_styles,
             "headline_html": news_data.get("headline_html", news_data.get("title", "")),
             "sub_headline": news_data.get("sub_headline", ""),
             "district": news_data.get("district", "উত্তরবঙ্গ"),
@@ -114,7 +169,7 @@ class CardGenerator:
             with sync_playwright() as p:
                 browser = p.chromium.launch()
                 page = browser.new_page(viewport={"width": 1080, "height": 1350}, device_scale_factor=1)
-                page.set_content(html_content, wait_until="networkidle")
+                page.set_content(html_content, wait_until="load")
                 page.screenshot(path=out_image_path)
                 browser.close()
 

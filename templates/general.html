@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@500;600;700;800&family=Montserrat:wght@700;900&display=swap');
+  {{ font_styles | safe }}
 
   * {
     margin: 0;
@@ -14,10 +14,10 @@
   body {
     width: 1080px;
     height: 1350px;
-    background: #F1F5F9;
-    background: radial-gradient(circle at 10% 10%, #ecfdf5 0%, #f8fafc 50%, #f1f5f9 100%);
-    font-family: 'Hind Siliguri', sans-serif;
-    color: #0f172a;
+    background: #F8F6F0;
+    background: radial-gradient(circle at 50% 10%, #ffffff 0%, #F5F3EC 70%, #ECE9E1 100%);
+    font-family: 'Kalpurush', 'SolaimanLipi', sans-serif;
+    color: #111827;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -40,15 +40,16 @@
   }
 
   .logo-img {
-    height: 60px;
+    height: 56px;
     width: auto;
   }
 
   .brand-title {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 28px;
+    font-family: system-ui, sans-serif;
+    font-size: 26px;
     font-weight: 900;
     letter-spacing: 0.5px;
+    color: #0f172a;
   }
 
   .brand-title span {
@@ -58,22 +59,23 @@
   .district-tag {
     background: #0f172a;
     color: #ffffff;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
-    padding: 6px 18px;
+    padding: 6px 20px;
     border-radius: 20px;
+    font-family: 'SolaimanLipi', sans-serif;
   }
 
   /* Framed Image Card */
   .image-card {
     width: 960px;
-    height: 560px;
-    border-radius: 24px;
+    height: 580px;
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
     border: 3px solid #ffffff;
-    background: #cbd5e1;
-    margin: 20px 0;
+    background: #e2e8f0;
+    margin: 15px 0;
   }
 
   .image-card img {
@@ -82,59 +84,62 @@
     object-fit: cover;
   }
 
-  /* Headline Section */
-  .headline-section {
-    margin-bottom: 20px;
+  /* Middle Meta Bar (Like Channel 24 Style) */
+  .middle-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #DC2626;
+    margin-bottom: 8px;
+    font-family: 'SolaimanLipi', sans-serif;
   }
 
-  .subhead {
-    font-size: 26px;
-    color: #475569;
-    font-weight: 600;
-    margin-bottom: 12px;
+  /* Headline Section (Two-Tone Newspaper Serif) */
+  .headline-section {
+    margin-bottom: 15px;
   }
 
   .main-headline {
-    font-size: 50px;
-    font-weight: 800;
+    font-size: 56px;
+    font-weight: 700;
     line-height: 1.35;
-    color: #0f172a;
-    letter-spacing: -0.5px;
+    color: #111827;
+    letter-spacing: -0.3px;
+    font-family: 'Kalpurush', 'SolaimanLipi', serif;
   }
 
   .main-headline .highlight {
     color: #DC2626;
   }
 
-  /* Footer */
+  /* Footer Bar */
   .footer-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 2px solid #e2e8f0;
-    padding-top: 24px;
+    border-top: 2px solid #E5E7EB;
+    padding-top: 22px;
   }
 
-  .source-info {
+  .tagline {
     font-size: 20px;
-    color: #64748b;
+    color: #4B5563;
     font-weight: 600;
-  }
-
-  .source-info strong {
-    color: #0f172a;
+    font-family: 'SolaimanLipi', sans-serif;
   }
 
   .handle {
-    font-family: 'Montserrat', sans-serif;
+    font-family: system-ui, sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: #0f172a;
+    color: #111827;
     background: #ffffff;
-    padding: 6px 18px;
+    padding: 6px 20px;
     border-radius: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e2e8f0;
+    border: 1px solid #E5E7EB;
   }
 </style>
 </head>
@@ -153,19 +158,19 @@
     <img src="{{ image_path }}" alt="News Photo">
   </div>
 
+  <div class="middle-meta">
+    <div>সূত্র: {{ source }}</div>
+    <div>তারিখ: {{ bangla_date }}</div>
+  </div>
+
   <div class="headline-section">
-    {% if sub_headline %}
-    <div class="subhead">{{ sub_headline }}</div>
-    {% endif %}
     <div class="main-headline">
       {{ headline_html | safe }}
     </div>
   </div>
 
   <div class="footer-bar">
-    <div class="source-info">
-      সূত্র: <strong>{{ source }}</strong> | {{ bangla_date }}
-    </div>
+    <div class="tagline">উত্তরবঙ্গের প্রতিটি জনপদের বলিষ্ঠ কণ্ঠস্বর</div>
     <div class="handle">fb.com/northvoicebd</div>
   </div>
 </body>
