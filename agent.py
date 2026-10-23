@@ -35,9 +35,14 @@ def run_agent():
         return
 
     posted_count = 0
+    failed_attempts = 0
+    MAX_FAILED_ATTEMPTS = 2
 
     # Step 2: Iterate and process
     for item in candidates:
+        if failed_attempts >= MAX_FAILED_ATTEMPTS:
+            logger.error(f"Stopping run: Reached maximum failed posting attempts ({MAX_FAILED_ATTEMPTS}). Please check Facebook permissions.")
+            break
         link = item["link"]
         title = item["title"]
 
@@ -82,6 +87,9 @@ def run_agent():
             if posted_count >= MAX_POSTS_PER_RUN:
                 logger.info(f"Reached MAX_POSTS_PER_RUN limit ({MAX_POSTS_PER_RUN}). Finishing current run.")
                 break
+        else:
+            failed_attempts += 1
+            logger.warning(f"Facebook posting failed ({failed_attempts}/{MAX_FAILED_ATTEMPTS}).")
 
     # Clean up temporary downloaded images
     for temp_file in glob.glob("output/temp_news_*"):

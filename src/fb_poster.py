@@ -50,6 +50,9 @@ class FacebookPoster:
                     logger.info(f"Successfully published post to Facebook! Post ID: {post_id}")
                     return post_id
                 else:
+                    err_msg = data.get("error", {}).get("message", "")
+                    if "pages_manage_posts" in err_msg or "(#200)" in err_msg:
+                        logger.error("🚨 FACEBOOK PERMISSION ERROR: Your Facebook Token does not have 'pages_manage_posts' permission! Please generate a Page Access Token with 'pages_manage_posts' and 'pages_read_engagement'.")
                     logger.error(f"Facebook Graph API Error ({response.status_code}): {data}")
                     return None
         except Exception as e:
