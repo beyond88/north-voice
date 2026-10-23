@@ -2,8 +2,8 @@ name: North Voice Autonomous News Agent
 
 on:
   schedule:
-    # Runs automatically every 30 minutes
-    - cron: '*/30 * * * *'
+    # Runs automatically every 30 minutes at off-peak minutes (:11 and :41) to avoid GitHub's top-of-the-hour queue delay
+    - cron: '11,41 * * * *'
   workflow_dispatch: # Allows manual trigger from GitHub web UI
 
 permissions:
