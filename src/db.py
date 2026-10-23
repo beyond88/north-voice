@@ -57,5 +57,9 @@ class Database:
             logger.info(f"Saved post signature to Supabase: {url_hash[:10]}...")
             return True
         except Exception as e:
-            logger.error(f"Failed to save post in Supabase: {e}")
+            err_dict = getattr(e, 'args', [{}])[0] if hasattr(e, 'args') and len(e.args) > 0 else {}
+            if isinstance(err_dict, dict) and err_dict.get("code") == "42501":
+                logger.error("🚨 SUPABASE RLS ERROR (42501): Table 'posts' has Row Level Security (RLS) enabled without an INSERT policy! Please run 'ALTER TABLE posts DISABLE ROW LEVEL SECURITY;' in Supabase SQL editor.")
+            else:
+                logger.error(f"Failed to save post in Supabase: {e}")
             return False
