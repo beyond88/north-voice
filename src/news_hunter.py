@@ -157,9 +157,17 @@ class NewsHunter:
         else:
             score += 10
 
-        # 3. Real News Image Present (15 pts)
-        if item.get("image_url"):
-            score += 15
+        # 3. Real News Image Present (15 pts, but heavily penalize stock clipart)
+        img_url = (item.get("image_url") or "").lower()
+        if img_url:
+            stock_keywords = [
+                "handcuff", "illustration", "stock", "clipart", "vector",
+                "placeholder", "gavel", "symbol", "default-news", "generic", "logo"
+            ]
+            if any(sk in img_url for sk in stock_keywords):
+                score -= 30  # Strongly deprioritize generic white/stock cliparts
+            else:
+                score += 15
 
         # 4. Headline Engagement & Friction (up to 10 pts)
         # Quotes and exact numbers drive high comment debate

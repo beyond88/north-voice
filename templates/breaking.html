@@ -28,7 +28,7 @@
     height: 800px;
     position: relative;
     overflow: hidden;
-    background: #1e293b;
+    background: #4c0519;
   }
 
   .main-image {
@@ -36,6 +36,17 @@
     height: 100%;
     object-fit: cover;
     object-position: center;
+  }
+
+  /* Subtle cinematic vignette at top edge */
+  .image-top-fade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, rgba(15, 23, 42, 0.45) 0%, transparent 100%);
+    pointer-events: none;
   }
 
   /* Deep gradient fade at the bottom of the photo */
@@ -180,6 +191,7 @@
 <body>
   <div class="image-container">
     <img src="{{ image_path }}" class="main-image" alt="News Image">
+    <div class="image-top-fade"></div>
     <div class="image-fade"></div>
     <div class="badge-container">
       <div class="live-pill">সদ্য প্রাপ্ত</div>

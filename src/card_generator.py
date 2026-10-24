@@ -121,6 +121,50 @@ class CardGenerator:
             logger.error(f"Failed to download image {url}: {e}")
         return False
 
+    @staticmethod
+    def is_stock_or_white_graphic(image_path: str) -> bool:
+        """
+        Detects whether an image is a generic stock illustration, clipart, or has a stark white background
+        (such as newspaper arrest/handcuffs graphics, court gavel clipart, generic question mark, etc.).
+        """
+        try:
+            from PIL import Image
+            with Image.open(image_path) as im:
+                w, h = im.size
+                if w < 250 or h < 180:
+                    return True
+                im_gray = im.convert('L')
+                
+                # Check corners for pure white / flat illustration background
+                c_tl = im_gray.getpixel((10, 10))
+                c_tr = im_gray.getpixel((w - 10, 10))
+                c_bl = im_gray.getpixel((10, h - 10))
+                c_br = im_gray.getpixel((w - 10, h - 10))
+                corners = [c_tl, c_tr, c_bl, c_br]
+                corners_white = sum(1 for c in corners if c > 215)
+                top_corners_white = (c_tl > 215) and (c_tr > 215)
+                
+                # Resize to thumbnail for fast pixel scanning
+                thumb = im_gray.resize((50, 50))
+                try:
+                    pixels = list(thumb.get_flattened_data())
+                except AttributeError:
+                    pixels = list(thumb.getdata())
+                    
+                avg_brightness = sum(pixels) / len(pixels)
+                white_ratio = sum(1 for p in pixels if p > 220) / len(pixels)
+                
+                # Flag as stock graphic if white background detected
+                if (top_corners_white and avg_brightness > 180 and white_ratio > 0.18):
+                    return True
+                if (corners_white >= 2 and avg_brightness > 185 and white_ratio > 0.15):
+                    return True
+                if white_ratio > 0.35 or avg_brightness > 215:
+                    return True
+        except Exception as e:
+            logger.warning(f"Image realism check error: {e}")
+        return False
+
     def generate_card(self, news_data: Dict, output_dir: str = "output") -> Optional[str]:
         """
         Renders the photocard based on selected template and returns local image path.
@@ -149,6 +193,16 @@ class CardGenerator:
             final_image_path = os.path.abspath(image_url if os.path.exists(image_url) else temp_img_path)
         else:
             logger.error(f"Photocard generation skipped: No valid news photo could be downloaded for '{news_data.get('title', '')[:40]}'.")
+            return None
+
+        # Check for stock illustrations / harsh white graphics
+        if self.is_stock_or_white_graphic(final_image_path):
+            logger.warning(f"Image for '{news_data.get('title', '')[:40]}' is a stock graphic/white clipart. Skipping to ensure authentic photo.")
+            if os.path.exists(temp_img_path):
+                try:
+                    os.remove(temp_img_path)
+                except Exception:
+                    pass
             return None
 
         logo_abs_path = os.path.abspath(self.logo_path)

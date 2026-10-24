@@ -14,10 +14,9 @@
   body {
     width: 1080px;
     height: 1350px;
-    background: #F8F6F0;
-    background: radial-gradient(circle at 50% 10%, #ffffff 0%, #F5F3EC 70%, #ECE9E1 100%);
-    font-family: 'Kalpurush', 'SolaimanLipi', sans-serif;
-    color: #111827;
+    background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 60%, #030712 100%);
+    font-family: 'SolaimanLipi', 'Kalpurush', sans-serif;
+    color: #ffffff;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -42,6 +41,7 @@
   .logo-img {
     height: 56px;
     width: auto;
+    filter: brightness(0) invert(1);
   }
 
   .brand-title {
@@ -49,7 +49,7 @@
     font-size: 26px;
     font-weight: 900;
     letter-spacing: 0.5px;
-    color: #0f172a;
+    color: #ffffff;
   }
 
   .brand-title span {
@@ -57,13 +57,14 @@
   }
 
   .district-tag {
-    background: #0f172a;
+    background: #E50914;
     color: #ffffff;
     font-size: 22px;
     font-weight: 700;
     padding: 6px 20px;
     border-radius: 20px;
     font-family: 'SolaimanLipi', sans-serif;
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
   }
 
   /* Framed Image Card */
@@ -72,9 +73,9 @@
     height: 580px;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-    border: 3px solid #ffffff;
-    background: #e2e8f0;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: #1e1b4b;
     margin: 15px 0;
   }
 
@@ -84,19 +85,19 @@
     object-fit: cover;
   }
 
-  /* Middle Meta Bar (Like Channel 24 Style) */
+  /* Middle Meta Bar */
   .middle-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 22px;
     font-weight: 700;
-    color: #DC2626;
+    color: #F87171;
     margin-bottom: 8px;
     font-family: 'SolaimanLipi', sans-serif;
   }
 
-  /* Headline Section (Two-Tone Newspaper Serif) */
+  /* Headline Section */
   .headline-section {
     margin-bottom: 15px;
   }
@@ -105,13 +106,14 @@
     font-size: 56px;
     font-weight: 700;
     line-height: 1.35;
-    color: #111827;
+    color: #f8fafc;
     letter-spacing: -0.3px;
-    font-family: 'Kalpurush', 'SolaimanLipi', serif;
+    font-family: 'SolaimanLipi', 'Kalpurush', serif;
   }
 
   .main-headline .highlight {
-    color: #DC2626;
+    color: #FACC15;
+    text-shadow: 0 0 15px rgba(250, 204, 21, 0.35);
   }
 
   /* Footer Bar */
@@ -119,13 +121,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 2px solid #E5E7EB;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     padding-top: 22px;
   }
 
   .tagline {
     font-size: 20px;
-    color: #4B5563;
+    color: #cbd5e1;
     font-weight: 600;
     font-family: 'SolaimanLipi', sans-serif;
   }
@@ -134,12 +136,11 @@
     font-family: system-ui, sans-serif;
     font-size: 20px;
     font-weight: 700;
-    color: #111827;
-    background: #ffffff;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
     padding: 6px 20px;
     border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border: 1px solid #E5E7EB;
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 </style>
 </head>

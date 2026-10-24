@@ -95,7 +95,7 @@ def run_agent():
         card_image_path = generator.generate_card(news_payload)
 
         if not card_image_path or not os.path.exists(card_image_path):
-            logger.error("Failed to generate photocard. Skipping to next.")
+            logger.warning(f"Photocard generation skipped (missing image or stock clipart detected) for '{title[:40]}'. Trying next candidate with authentic photo...")
             continue
 
         # Step 4.4: Post to Facebook Page Feed

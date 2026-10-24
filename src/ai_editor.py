@@ -62,26 +62,25 @@ class AIEditor:
         loc_display = f"{upazila}, {district}" if upazila else district
         subhead = f"{upazila} বার্তা" if upazila else f"{district} বার্তা"
 
-        # 1. Breaking (Red Banner)
-        if any(w in full_text for w in ["নিহত", "আহত", "দুর্ঘটনা", "গ্রেপ্তার", "আটক", "আগুন", "ডাকাতি", "ধর্ষন", "খুন", "অবরোধ"]):
-            template = "breaking"
-            header_badge = f"ব্রেকিং নিউজ | {loc_display}"
-            cta_question = f"এ বিষয়ে আপনার এলাকার সার্বিক পরিস্থিতি সম্পর্কে আপনার মতামত কমেন্টে জানান।"
-        # 2. Quote Card (Dark Editorial)
-        elif any(w in full_text for w in ["বলেন", "মন্তব্য", "দাবি করেন", "হুশিয়ারি", "উক্তি", "ঘোষণা"]):
+        # 1. Quote Card (Dark Editorial)
+        if any(w in full_text for w in ["বলেন", "মন্তব্য", "দাবি করেন", "হুশিয়ারি", "উক্তি", "ঘোষণা"]):
             template = "quote"
             header_badge = f"বিশেষ বক্তব্য | {loc_display}"
             cta_question = f"বক্তার এই বক্তব্যের সাথে আপনি কি একমত? আপনার যুক্তিযুক্ত মতামত কমেন্টে তুলে ধরুন।"
-        # 3. Inqilab Style (Politics, bilateral, governance)
+        # 2. Inqilab Style (Politics, bilateral, governance)
         elif any(w in full_text for w in ["রাজনীতি", "সীমান্ত", "তিস্তা", "নির্বাচন", "বিএনপি", "জামায়াত", "সরকার", "আন্দোলন"]):
             template = "inqilab_style"
             header_badge = f"রাজনীতি ও সমসাময়িক | {loc_display}"
             cta_question = f"এই সমসাময়িক প্রেক্ষাপট নিয়ে আপনার মূল্যায়ন কী? কমেন্টে আলোচনা করুন।"
-        # 4. General (Agriculture, economics, feature)
+        # 3. Signature Crimson Photocard (Breaking, Development, Agriculture, Crime, Human Interest)
         else:
-            template = "general"
-            header_badge = f"উত্তরবঙ্গ সমাচার | {loc_display}"
-            cta_question = f"উত্তরবঙ্গের সামগ্রিক উন্নয়নে এমন উদ্যোগ কতটা গুরুত্বপূর্ণ বলে আপনি মনে করেন? আপনার অভিজ্ঞতা শেয়ার করুন।"
+            template = "breaking"
+            if any(w in full_text for w in ["নিহত", "আহত", "দুর্ঘটনা", "গ্রেপ্তার", "আটক", "আগুন", "ডাকাতি", "খুন", "অবরোধ"]):
+                header_badge = f"ব্রেকিং নিউজ | {loc_display}"
+                cta_question = f"এ বিষয়ে আপনার এলাকার সার্বিক পরিস্থিতি সম্পর্কে আপনার মতামত কমেন্টে জানান।"
+            else:
+                header_badge = f"উত্তরবঙ্গ সমাচার | {loc_display}"
+                cta_question = f"উত্তরবঙ্গের সামগ্রিক উন্নয়নে এমন উদ্যোগ কতটা গুরুত্বপূর্ণ বলে আপনি মনে করেন? আপনার অভিজ্ঞতা শেয়ার করুন।"
 
         formatted_body = self.format_clean_story(summary, max_chars=900)
         if not formatted_body:
@@ -170,14 +169,14 @@ class AIEditor:
 #NorthVoice #উত্তরবঙ্গ #{district} #{upazila if upazila else ''} #NorthBengal #BangladeshNews
 
 ফটোকার্ডের তথ্য (template ও headline_html):
-- template: 'breaking' (দুর্ঘটনা, অপরাধ, হঠাৎ ব্রেকিং) | 'quote' (বক্তব্য/মন্তব্য) | 'general' (উন্নয়ন, অর্থনীতি, কৃষি, সাধারণ) | 'inqilab_style' (রাজনীতি, শাসনব্যবস্থা, তিস্তা/সীমান্ত)
+- template: 'breaking' (North Voice এর প্রধান সিগনেচার ক্রিমসন কার্ড - উন্নয়ন, কৃষি, অর্থনীতি, দুর্ঘটনা বা ব্রেকিং সকল সাধারণ খবরের জন্য প্রাথমিক পছন্দ) | 'quote' (বক্তব্য/উক্তি) | 'inqilab_style' (রাজনীতি/শাসনব্যবস্থা/তিস্তা/সীমান্তের গভীর রাজনৈতিক বিশ্লেষণ)
 - headline_html: ফটোকার্ডের জন্য অত্যন্ত আকর্ষণীয় ও সংক্ষিপ্ত (২-৩ লাইন) হেডলাইন। মূল শব্দগুচ্ছকে <span class="highlight">শব্দ</span> দিয়ে মার্ক করবে।
 - sub_headline: "{upazila} বার্তা" অথবা "{district} বার্তা"
 
 নিচের JSON ফরম্যাটে সরাসরি উত্তর প্রদান করো (অন্য কোনো টেক্সট বা মার্কডাউন ছাড়া):
 {{
   "is_relevant": true,
-  "template": "breaking" | "quote" | "general" | "inqilab_style",
+  "template": "breaking" | "quote" | "inqilab_style",
   "headline_html": "হেডলাইন টেক্সট <span class='highlight'>হাইলাইট</span> সহ...",
   "sub_headline": "{upazila if upazila else district} বার্তা",
   "speaker_name": "বক্তার নাম (শুধুমাত্র quote টেমপ্লেটে)",
