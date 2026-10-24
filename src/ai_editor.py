@@ -20,21 +20,40 @@ class AIEditor:
             logger.warning("GEMINI_API_KEY not found. Running with rule-based fallback editor.")
 
     def fallback_analyze(self, title: str, summary: str, source: str, district: str) -> Dict:
-        """Intelligently routes news to all 4 templates even in fallback mode."""
+        """Intelligently routes news to all 4 templates with viral engagement captions even in fallback mode."""
         full_text = f"{title} {summary}"
 
         # 1. Breaking (Red Banner)
         if any(w in full_text for w in ["নিহত", "আহত", "দুর্ঘটনা", "গ্রেপ্তার", "আটক", "আগুন", "ডাকাতি", "ধর্ষন", "খুন", "অবরোধ"]):
             template = "breaking"
+            header_badge = f"🚨 ব্রেকিং নিউজ | {district}"
+            cta_question = f"এ বিষয়ে আপনার এলাকার আইনশৃঙ্খলা ও সার্বিক পরিস্থিতি সম্পর্কে আপনার মতামত কমেন্টে জানান।"
         # 2. Quote Card (Dark Editorial)
         elif any(w in full_text for w in ["বলেন", "মন্তব্য", "দাবি করেন", "হুশিয়ারি", "উক্তি", "ঘোষণা"]):
             template = "quote"
+            header_badge = f"💬 বিশেষ বক্তব্য | {district}"
+            cta_question = f"বক্তার এই বক্তব্যের সাথে আপনি কি একমত? আপনার যুক্তিযুক্ত মতামত কমেন্টে তুলে ধরুন।"
         # 3. Inqilab Style (Politics, bilateral, governance)
         elif any(w in full_text for w in ["রাজনীতি", "সীমান্ত", "তিস্তা", "নির্বাচন", "বিএনপি", "জামায়াত", "সরকার", "আন্দোলন"]):
             template = "inqilab_style"
+            header_badge = f"📢 রাজনীতি ও সমসাময়িক | {district}"
+            cta_question = f"এই রাজনৈতিক ও সমসাময়িক প্রেক্ষাপট নিয়ে আপনার মূল্যায়ন কী? কমেন্টে আলোচনা করুন।"
         # 4. General (Agriculture, economics, feature)
         else:
             template = "general"
+            header_badge = f"📌 উত্তরবঙ্গ সমাচার | {district}"
+            cta_question = f"উত্তরবঙ্গের সামগ্রিক উন্নয়নে এমন উদ্যোগ কতটা গুরুত্বপূর্ণ বলে আপনি মনে করেন? আপনার অভিজ্ঞতা শেয়ার করুন।"
+
+        caption = (
+            f"{header_badge}\n\n"
+            f"🔹 {title}\n\n"
+            f"{summary[:280]}...\n\n"
+            f"💬 আপনার মতামত:\n"
+            f"{cta_question}\n\n"
+            f"👉 উত্তরবঙ্গের প্রতিটি জনপদের নির্ভরযোগ্য খবরের জন্য আমাদের পেজে Follow দিয়ে যুক্ত থাকুন।\n\n"
+            f"📰 তথ্যসূত্র: {source}\n\n"
+            f"#NorthVoice #উত্তরবঙ্গ #{district} #NorthBengal #BangladeshNews"
+        )
 
         return {
             "is_relevant": True,
@@ -43,13 +62,13 @@ class AIEditor:
             "sub_headline": f"{district} বার্তা",
             "speaker_name": "",
             "speaker_title": "",
-            "fb_caption": f"📌 {title}\n\n{summary[:250]}...\n\nসূত্র: {source}\n\n#NorthVoice #উত্তরবঙ্গ #{district} #NorthBengalNews",
+            "fb_caption": caption,
             "district": district
         }
 
     def analyze_news(self, news_item: Dict) -> Optional[Dict]:
         """
-        Uses Gemini 3.8 Flash to analyze news and pick the optimal template out of all 4 designs.
+        Uses Gemini 3.8 Flash to analyze news, pick the optimal template, and write viral, engagement-driven captions.
         """
         title = news_item.get("title", "")
         summary = news_item.get("summary", "")
@@ -60,8 +79,8 @@ class AIEditor:
             return self.fallback_analyze(title, summary, source, district)
 
         prompt = f"""
-তুমি 'North Voice' (উত্তরবঙ্গের জনপ্রিয় ডিজিটাল নিউজ পেইজ)-এর চিফ এডিটর।
-নিচের সংবাদের তথ্য বিশ্লেষণ করে সবচেয়ে মানানসই ফটোকার্ডের কনটেন্ট ও ফেসবুক পোস্ট তৈরি করো।
+তুমি 'North Voice' (উত্তরবঙ্গের জনপ্রিয় ডিজিটাল নিউজ পেইজ)-এর চিফ এডিটর ও ভাইরাল সোশ্যাল মিডিয়া গ্রোথ স্পেশালিস্ট।
+নিচের সংবাদের তথ্য বিশ্লেষণ করে সবচেয়ে মানানসই ফটোকার্ডের কনটেন্ট ও সর্বোচ্চ এনগেজমেন্ট (লাইক, কমেন্ট ও শেয়ার) পাওয়ার উপযোগী ফেসবুক পোস্ট তৈরি করো।
 
 সংবাদের তথ্য:
 - শিরোনাম: {title}
@@ -81,7 +100,13 @@ class AIEditor:
 
 ৩. টেমপ্লেট যদি 'quote' হয়, তবে সংবাদের ভেতর থেকে বক্তার নাম (speaker_name) এবং পদবি (speaker_title) আলাদা করো।
 
-৪. ফেসবুক পোস্টের জন্য একটি চমৎকার পূর্ণাঙ্গ ক্যাপশন বানাও যাতে থাকবে: মূল বিষয়বস্তু, প্রাসঙ্গিক হ্যাশট্যাগ (#NorthVoice #উত্তরবঙ্গ #{district} ইত্যাদি) এবং সূত্রের কৃতজ্ঞতা।
+৪. ফেসবুক ক্যাপশন লেখার ক্ষেত্রে সর্বোচ্চ ভাইরাল রিচ ও কমেন্ট পাওয়ার ফর্মুলা প্রয়োগ করো:
+   ক. আকর্ষক হেডার ব্যাজ (যেমন: 🚨 ব্রেকিং নিউজ | {district} অথবা 📌 উত্তরবঙ্গ সমাচার | {district})
+   খ. খবরের মূল সারমর্ম সহজ-সরল ২-৩ লাইনে লিখবে যাতে মোবাইল স্ক্রিনে ৫ সেকেন্ডে পুরো বিষয় বোঝা যায়।
+   গ. বাধ্যতামূলক আলোচনা উসকে দেওয়া প্রশ্ন (Engagement Hook): পাঠকদের কমেন্টে মতামত জানানোর আহ্বান জানিয়ে সংবাদের বিষয়ের ওপর প্রাসঙ্গিক ও সুনির্দিষ্ট ১টি চিন্তাশীল প্রশ্ন জুড়ে দাও (যেমন: "এ বিষয়ে আপনার এলাকার বাস্তব পরিস্থিতি কেমন? কমেন্টে জানান।" বা "প্রশাসনের এমন পদক্ষেপকে আপনি কীভাবে দেখছেন?")।
+   ঘ. পেইজ ফলো করার ছোট্ট কল-টু-অ্যাকশন: "👉 উত্তরবঙ্গের প্রতিটি জনপদের নির্ভরযোগ্য খবরের জন্য আমাদের পেইজে Follow দিয়ে সাথে থাকুন।"
+   ঙ. তথ্যের সূত্র: "📰 তথ্যসূত্র: {source}"
+   চ. সার্চ র‍্যাংকিংয়ের জন্য হ্যাশট্যাগ: #NorthVoice #উত্তরবঙ্গ #{district} #NorthBengal #BangladeshNews
 
 নিচের JSON ফরম্যাটে সরাসরি উত্তর প্রদান করো (অন্য কোনো টেক্সট বা ব্যাকটিক ছাড়া):
 {{
@@ -91,7 +116,7 @@ class AIEditor:
   "sub_headline": "সাব-হেডলাইন (প্রযোজ্য ক্ষেত্রে)",
   "speaker_name": "বক্তার নাম (শুধুমাত্র quote টেমপ্লেটে)",
   "speaker_title": "বক্তার পদবি (শুধুমাত্র quote টেমপ্লেটে)",
-  "fb_caption": "ফেসবুক ক্যাপশন টেক্সট...",
+  "fb_caption": "সম্পূর্ণ প্রফেশনাল ও এনগেজিং ফেসবুক ক্যাপশন...",
   "district": "{district}"
 }}
 """
