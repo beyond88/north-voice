@@ -150,28 +150,35 @@ class AIEditor:
 }}
 """
 
-        try:
-            response = self.client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    temperature=0.3
-                )
-            )
-            raw_text = response.text.strip()
-            # If wrapped in ```json ... ```, strip it
-            if raw_text.startswith("```"):
-                lines = raw_text.splitlines()
-                if lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines and lines[-1].startswith("```"):
-                    lines = lines[:-1]
-                raw_text = "\n".join(lines).strip()
+        models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"]
+        last_error = None
 
-            data = json.loads(raw_text)
-            logger.info(f"AI Editor selected template: '{data.get('template')}' for '{title[:30]}...'")
-            return data
-        except Exception as e:
-            logger.error(f"Gemini API error: {e}. Using intelligent fallback.")
-            return self.fallback_analyze(title, summary, source, district)
+        for model_name in models_to_try:
+            try:
+                response = self.client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.3
+                    )
+                )
+                raw_text = response.text.strip()
+                # If wrapped in ```json ... ```, strip it
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines and lines[-1].startswith("```"):
+                        lines = lines[:-1]
+                    raw_text = "\n".join(lines).strip()
+
+                data = json.loads(raw_text)
+                logger.info(f"AI Editor selected template: '{data.get('template')}' using model '{model_name}' for '{title[:30]}...'")
+                return data
+            except Exception as e:
+                logger.warning(f"Gemini API model {model_name} failed: {e}. Trying next available model...")
+                last_error = e
+
+        logger.error(f"All Gemini models failed. Last error: {last_error}. Using intelligent fallback.")
+        return self.fallback_analyze(title, summary, source, district)
