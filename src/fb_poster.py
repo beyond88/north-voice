@@ -84,3 +84,29 @@ class FacebookPoster:
         except Exception as e:
             logger.error(f"Failed to post to Facebook: {e}")
             return None
+
+    def post_comment(self, post_id: str, message: str) -> bool:
+        """
+        Posts an official first comment under the published post.
+        """
+        if self.dry_run:
+            logger.info(f"[DRY-RUN COMMENT] Post ID {post_id}: {message}")
+            return True
+
+        url = f"https://graph.facebook.com/v20.0/{post_id}/comments"
+        payload = {
+            "message": message,
+            "access_token": self.access_token
+        }
+        try:
+            res = requests.post(url, data=payload, timeout=20)
+            data = res.json()
+            if res.status_code == 200 and "id" in data:
+                logger.info(f"✅ Successfully posted first comment on post {post_id} (Comment ID: {data.get('id')})")
+                return True
+            else:
+                logger.warning(f"Could not post first comment on post {post_id}: {data}")
+                return False
+        except Exception as e:
+            logger.warning(f"Failed to post first comment on post {post_id}: {e}")
+            return False
