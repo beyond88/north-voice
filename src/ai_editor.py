@@ -115,11 +115,11 @@ class AIEditor:
             "upazila": upazila
         }
 
-    def analyze_news(self, news_item: Dict) -> Optional[Dict]:
+    def analyze_news(self, news_item: Dict, recent_headlines: Optional[list] = None) -> Optional[Dict]:
         """
         Uses Gemini 3.8 Flash to analyze news, intelligently decide between deep long-form
         journalism vs crisp breaking reports, pick the optimal visual template,
-        and write 100% human-grade, zero-plagiarism broadsheet copy.
+        track multi-stage evolving storylines, and write 100% human-grade, zero-plagiarism broadsheet copy.
         """
         title = news_item.get("title", "")
         summary = news_item.get("summary", "")
@@ -131,6 +131,12 @@ class AIEditor:
 
         if not self.client:
             return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral)
+
+        recent_headlines_block = ""
+        if recent_headlines:
+            cleaned_recent = [h.strip() for h in recent_headlines[:15] if h.strip()]
+            if cleaned_recent:
+                recent_headlines_block = "\n".join([f"- {h}" for h in cleaned_recent])
 
         prompt = f"""
 তুমি 'North Voice' (উত্তরবঙ্গের শীর্ষস্থানীয় ও দায়িত্বশীল ডিজিটাল সংবাদ মাধ্যম)-এর প্রধান বার্তা সম্পাদক (Chief News Editor)।
@@ -155,6 +161,20 @@ class AIEditor:
 ৪. কঠোরভাবে নিষিদ্ধ:
    - কোনো প্রকার ইমোজি বা আইকন (🚨, 👉, 🔹, 💬, 📰, 📌 ইত্যাদি) ব্যবহার করা যাবে না।
    - কোনো চটুল বা এআই-ক্লিশে বাক্য (যেমন: 'আসুন জেনে নেই', 'চলুন দেখে নেওয়া যাক', 'আমাদের সাথেই থাকুন', 'এটি অত্যন্ত গুরুত্বপূর্ণ একটি বিষয়', 'আলোচনার ঝড় উঠেছে') লেখা যাবে না।
+
+৫. ধারাবাহিক ও ক্রমবিকাশমান সংবাদ মূল্যায়ন (Evolving Storyline Arc Tracking):
+আমাদের পেজে সম্প্রতি প্রকাশিত সংবাদের শিরোনামসমূহ:
+{recent_headlines_block if recent_headlines_block else "(পূর্বে কোনো পোস্ট সংরক্ষিত নেই)"}
+
+যদি বর্তমান সংবাদটি উপরের পূর্বে প্রকাশিত কোনো সংবাদের বিষয়ের সাথে সম্পর্কিত হয়:
+- ক) এটি কি পূর্বের পোস্টেরই হুবহু একই তথ্য বা একই স্টেজের ঘটনা? (যেমন: আগের পোস্টে যে প্রাথমিক খবর/ভিডিওর তথ্য ছিল, এই সংবাদেও মূলত একই বিষয়ের পুনরাবৃত্তি)।
+  -> এমন হলে "is_relevant": false এবং "reason": "একই স্টেজের পুনরাবৃত্তি। পরবর্তী নতুন মোড় বা পদক্ষেপের জন্য অপেক্ষা করা হচ্ছে।" প্রদান করবে।
+- খ) এটি কি ওই ঘটনার কোনো নতুন অগ্রগতি বা পরবর্তী স্টেজ? (যেমন: আগে ঘটনাটি পোস্ট করা হয়েছিল, এবার এসেছে তদন্ত কমিটি গঠন, প্রত্যাহার, ওএসডি, মামলা, গ্রেপ্তার, পুলিশি অ্যাকশন বা নেপথ্যের নতুন তথ্য)।
+  -> এমন হলে এটি অবশ্যই প্রকাশযোগ্য ("is_relevant": true)! 
+     - template: "viral"
+     - sub_headline: "সর্বশেষ আপডেট" অথবা "তদন্ত ও পদক্ষেপ" অথবা "আইনি পদক্ষেপ"
+     - headline_html: আগের ঘটনার সূত্র ধরে নতুন মোড়টি তুলে ধরবে (যেমন: "ফেসবুকে পোস্টের পর এবার <span class='highlight'>এসিল্যান্ড প্রত্যাহার</span>, তদন্ত কমিটি")
+     - fb_caption: ক্যাপশনের প্রারম্ভে আগের ঘটনার সূত্র উল্লেখ করবে (যেমন: "এর আগে সামাজিক যোগাযোগমাধ্যমে তাঁর পোস্ট ঘিরে ব্যাপক তোলপাড় শুরু হয়। এবার ঘটনার ধারাবাহিকতায়...")
 
 সংবাদের মূল তথ্য:
 - শিরোনাম: {title}
@@ -185,6 +205,7 @@ class AIEditor:
 নিচের JSON ফরম্যাটে সরাসরি উত্তর প্রদান করো (অন্য কোনো টেক্সট বা মার্কডাউন ছাড়া):
 {{
   "is_relevant": true,
+  "reason": "কারণ (যদি is_relevant false হয়)",
   "template": "viral" | "breaking" | "quote" | "inqilab_style",
   "headline_html": "হেডলাইন টেক্সট <span class='highlight'>হাইলাইট</span> সহ...",
   "sub_headline": "{'সারা দেশ' if is_viral and not upazila else (upazila if upazila else district) + ' বার্তা'}",

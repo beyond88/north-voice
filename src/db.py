@@ -41,6 +41,19 @@ class Database:
             logger.error(f"Error checking duplicate in Supabase: {e}")
             return False
 
+    def get_recent_headlines(self, limit: int = 35) -> list:
+        """Fetches the recent published headlines to detect evolving storylines and avoid duplicate stages."""
+        if not self.client:
+            return []
+        try:
+            res = self.client.table("posts").select("headline").order("created_at", desc=True).limit(limit).execute()
+            if res.data:
+                return [r.get("headline", "") for r in res.data if r.get("headline")]
+            return []
+        except Exception as e:
+            logger.debug(f"Could not fetch recent headlines from Supabase: {e}")
+            return []
+
     def save_post(self, news_url: str, headline: str, fb_post_id: str = "dry_run") -> bool:
         """Records a successful post in Supabase."""
         if not self.client:

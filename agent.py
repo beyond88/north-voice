@@ -46,6 +46,11 @@ def run_agent():
     failed_attempts = 0
     MAX_FAILED_ATTEMPTS = 2
 
+    # Fetch recent published headlines to detect evolving storylines & prevent duplicate stages
+    recent_headlines = db.get_recent_headlines(limit=35)
+    if recent_headlines:
+        logger.info(f"Loaded {len(recent_headlines)} recent published headlines for multi-stage storyline tracking.")
+
     # Step 3: Process the highest ranked candidates (deduplicate on-demand)
     for item in candidates:
         if posted_count >= MAX_POSTS_PER_RUN:
@@ -79,12 +84,13 @@ def run_agent():
                 logger.warning(f"No real news image found for '{title[:40]}'. Skipping to maintain premium visual standard.")
                 continue
 
-        # Step 4.2: AI Editing & Formatting (Gemini with intelligent fallback)
-        logger.info("Passing news to Gemini AI Editor...")
-        analysis = editor.analyze_news(item)
+        # Step 4.2: AI Editing & Formatting (Gemini with multi-stage storyline intelligence)
+        logger.info("Passing news to Gemini AI Editor with storyline tracking...")
+        analysis = editor.analyze_news(item, recent_headlines=recent_headlines)
 
         if not analysis or not analysis.get("is_relevant", True):
-            logger.info("AI Editor evaluated news as low priority or not relevant. Skipping.")
+            reason = analysis.get("reason", "low priority") if analysis else "skipped"
+            logger.info(f"AI Editor rejected candidate ({reason}). Skipping to next candidate.")
             continue
 
         # Merge AI analysis with item
