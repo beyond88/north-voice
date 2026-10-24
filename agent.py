@@ -34,21 +34,11 @@ def run_agent():
         logger.info("No North Bengal news found in current scan. Agent exiting.")
         return
 
-    # Step 2: Deduplication against Supabase
-    fresh_candidates = []
-    for item in candidates:
-        if not db.is_already_posted(item["link"]):
-            fresh_candidates.append(item)
-
-    if not fresh_candidates:
-        logger.info("All collected candidates have already been posted. Agent exiting.")
-        return
-
-    # Step 3: Sort candidates by Organic Reach & Virality Score (Highest First)
-    fresh_candidates.sort(key=lambda x: x.get("reach_score", 0), reverse=True)
+    # Step 2: Sort all candidates in memory by Virality & Organic Reach score (Highest First)
+    candidates.sort(key=lambda x: x.get("reach_score", 0), reverse=True)
 
     logger.info(f"Top 5 Ranked Candidates by Virality & Organic Reach Potential:")
-    for idx, c in enumerate(fresh_candidates[:5], 1):
+    for idx, c in enumerate(candidates[:5], 1):
         loc = f"{c.get('upazila') or c.get('district')}"
         logger.info(f"  #{idx} [Reach Score: {c.get('reach_score', 0):.1f}] ({loc}) {c.get('title')[:60]}")
 
@@ -56,8 +46,8 @@ def run_agent():
     failed_attempts = 0
     MAX_FAILED_ATTEMPTS = 2
 
-    # Step 4: Process the highest ranked candidates
-    for item in fresh_candidates:
+    # Step 3: Process the highest ranked candidates (deduplicate on-demand)
+    for item in candidates:
         if posted_count >= MAX_POSTS_PER_RUN:
             break
         if failed_attempts >= MAX_FAILED_ATTEMPTS:
@@ -66,6 +56,12 @@ def run_agent():
 
         link = item["link"]
         title = item["title"]
+
+        # Fast deduplication check only on candidates we actually consider
+        if db.is_already_posted(link):
+            logger.debug(f"Skipping already posted news: {link}")
+            continue
+
         upazila = item.get("upazila")
         district = item.get("district", "উত্তরবঙ্গ")
         loc_display = f"{upazila}, {district}" if upazila else district
