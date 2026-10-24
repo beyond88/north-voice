@@ -19,6 +19,42 @@ class AIEditor:
         else:
             logger.warning("GEMINI_API_KEY not found. Running with rule-based fallback editor.")
 
+    @staticmethod
+    def format_clean_story(text: str, max_chars: int = 900) -> str:
+        """
+        Formats Bengali story into clean, complete sentences and well-spaced paragraphs.
+        Never cuts sentences in the middle. Always ends on a proper sentence boundary (।).
+        """
+        if not text:
+            return ""
+
+        import re
+        clean_text = " ".join(text.split())
+        raw_sentences = re.split(r'(?<=[।?!])\s+', clean_text)
+        sentences = [s.strip() for s in raw_sentences if s.strip()]
+
+        if not sentences:
+            return clean_text[:max_chars]
+
+        paragraphs = []
+        current_para = []
+        char_count = 0
+
+        for s in sentences:
+            if char_count + len(s) > max_chars and paragraphs:
+                break
+            current_para.append(s)
+            char_count += len(s)
+            # Group 2 sentences per paragraph for mobile dwell-time rhythm
+            if len(current_para) >= 2:
+                paragraphs.append(" ".join(current_para))
+                current_para = []
+
+        if current_para:
+            paragraphs.append(" ".join(current_para))
+
+        return "\n\n".join(paragraphs)
+
     def fallback_analyze(self, title: str, summary: str, source: str, district: str) -> Dict:
         """Intelligently routes news to all 4 templates without emojis/icons in clean journalistic style."""
         full_text = f"{title} {summary}"
@@ -44,10 +80,14 @@ class AIEditor:
             header_badge = f"উত্তরবঙ্গ সমাচার | {district}"
             cta_question = f"উত্তরবঙ্গের সামগ্রিক উন্নয়নে এমন উদ্যোগ কতটা গুরুত্বপূর্ণ বলে আপনি মনে করেন? আপনার অভিজ্ঞতা শেয়ার করুন।"
 
+        formatted_body = self.format_clean_story(summary, max_chars=900)
+        if not formatted_body:
+            formatted_body = title
+
         caption = (
             f"{header_badge}\n\n"
             f"{title}\n\n"
-            f"{summary[:500]}...\n\n"
+            f"{formatted_body}\n\n"
             f"আপনার মতামত:\n"
             f"{cta_question}\n\n"
             f"তথ্যসূত্র: {source}\n\n"
