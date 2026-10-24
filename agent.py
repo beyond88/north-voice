@@ -28,32 +28,51 @@ def run_agent():
     generator = CardGenerator()
     poster = FacebookPoster()
 
-    # Step 1: Hunt for fresh North Bengal news
+    # Step 1: Hunt for fresh North Bengal news across all National & Upazila feeds
     candidates = hunter.fetch_candidates()
     if not candidates:
         logger.info("No North Bengal news found in current scan. Agent exiting.")
         return
 
+    # Step 2: Deduplication against Supabase
+    fresh_candidates = []
+    for item in candidates:
+        if not db.is_already_posted(item["link"]):
+            fresh_candidates.append(item)
+
+    if not fresh_candidates:
+        logger.info("All collected candidates have already been posted. Agent exiting.")
+        return
+
+    # Step 3: Sort candidates by Organic Reach & Virality Score (Highest First)
+    fresh_candidates.sort(key=lambda x: x.get("reach_score", 0), reverse=True)
+
+    logger.info(f"Top 5 Ranked Candidates by Virality & Organic Reach Potential:")
+    for idx, c in enumerate(fresh_candidates[:5], 1):
+        loc = f"{c.get('upazila') or c.get('district')}"
+        logger.info(f"  #{idx} [Reach Score: {c.get('reach_score', 0):.1f}] ({loc}) {c.get('title')[:60]}")
+
     posted_count = 0
     failed_attempts = 0
     MAX_FAILED_ATTEMPTS = 2
 
-    # Step 2: Iterate and process
-    for item in candidates:
+    # Step 4: Process the highest ranked candidates
+    for item in fresh_candidates:
+        if posted_count >= MAX_POSTS_PER_RUN:
+            break
         if failed_attempts >= MAX_FAILED_ATTEMPTS:
             logger.error(f"Stopping run: Reached maximum failed posting attempts ({MAX_FAILED_ATTEMPTS}). Please check Facebook permissions.")
             break
+
         link = item["link"]
         title = item["title"]
+        upazila = item.get("upazila")
+        district = item.get("district", "উত্তরবঙ্গ")
+        loc_display = f"{upazila}, {district}" if upazila else district
 
-        logger.info(f"Checking candidate: {title[:50]}...")
+        logger.info(f"Processing candidate [Score: {item.get('reach_score', 0):.1f}]: {title[:50]} ({loc_display})...")
 
-        # Deduplication check in Supabase
-        if db.is_already_posted(link):
-            logger.info(f"Skipping already posted news: {link}")
-            continue
-
-        # Step 2.5: Verify real news photo (fetch og:image if missing from RSS)
+        # Step 4.1: Verify real news photo (fetch og:image if missing from RSS)
         if not item.get("image_url"):
             logger.info(f"No RSS image found for '{title[:40]}'. Attempting to extract og:image from source...")
             og_img = hunter.fetch_og_image(link)
@@ -64,7 +83,7 @@ def run_agent():
                 logger.warning(f"No real news image found for '{title[:40]}'. Skipping to maintain premium visual standard.")
                 continue
 
-        # Step 3: AI Editing & Formatting (Gemini)
+        # Step 4.2: AI Editing & Formatting (Gemini with intelligent fallback)
         logger.info("Passing news to Gemini AI Editor...")
         analysis = editor.analyze_news(item)
 
@@ -75,7 +94,7 @@ def run_agent():
         # Merge AI analysis with item
         news_payload = {**item, **analysis}
 
-        # Step 4: Generate Photocard
+        # Step 4.3: Generate Photocard with real photo
         logger.info(f"Generating photocard using template '{news_payload.get('template')}'...")
         card_image_path = generator.generate_card(news_payload)
 
@@ -83,35 +102,24 @@ def run_agent():
             logger.error("Failed to generate photocard. Skipping to next.")
             continue
 
-        # Step 5: Post to Facebook
+        # Step 4.4: Post to Facebook Page Feed
         caption = news_payload.get("fb_caption", f"{title}\n\n#NorthVoice #উত্তরবঙ্গ")
         logger.info("Publishing to Facebook...")
         fb_post_id = poster.post_photocard(card_image_path, caption)
 
         if fb_post_id:
-            # Step 6: Post official first comment on the post
+            # Step 4.5: Post official first comment on the post
             first_comment = "উত্তরবঙ্গের প্রতিটি জনপদের নির্ভরযোগ্য খবরের জন্য আমাদের পেজে Follow দিয়ে যুক্ত থাকুন: https://facebook.com/northvoicebd"
             poster.post_comment(fb_post_id, first_comment)
 
-            # Step 7: Save signature to Supabase
+            # Step 4.6: Save signature to Supabase
             headline = news_payload.get("headline_html", title)
             db.save_post(news_url=link, headline=headline, fb_post_id=fb_post_id)
             posted_count += 1
             logger.info(f"✅ Successfully processed and posted news ({posted_count}/{MAX_POSTS_PER_RUN})!")
-
-            if posted_count >= MAX_POSTS_PER_RUN:
-                logger.info(f"Reached MAX_POSTS_PER_RUN limit ({MAX_POSTS_PER_RUN}). Finishing current run.")
-                break
         else:
             failed_attempts += 1
-            logger.warning(f"Facebook posting failed ({failed_attempts}/{MAX_FAILED_ATTEMPTS}).")
-
-    # Clean up temporary downloaded images
-    for temp_file in glob.glob("output/temp_news_*"):
-        try:
-            os.remove(temp_file)
-        except Exception:
-            pass
+            logger.warning(f"Failed attempt {failed_attempts}/{MAX_FAILED_ATTEMPTS} to post news.")
 
     logger.info("==================================================")
     logger.info(f"   North Voice Agent finished. Posts published: {posted_count}")
