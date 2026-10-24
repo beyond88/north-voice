@@ -83,8 +83,22 @@ def build_upazila_feeds():
         feeds.append(feed_url)
     return feeds
 
-# Combined 360-Degree Master RSS Feeds covering National Media, TV Channels, Local Dailies, and All Upazilas
-RSS_FEEDS = DIRECT_PORTAL_FEEDS + build_district_feeds() + build_upazila_feeds()
+# 4. Whole Bangladesh Facebook Viral & Trending Feeds (National Scope)
+def build_viral_feeds():
+    base_url = "https://news.google.com/rss/search?q={query}&hl=bn&gl=BD&ceid=BD:bn"
+    viral_queries = [
+        '("ফেসবুকে ভাইরাল" OR "ভিডিও ভাইরাল" OR "তোলপাড়" OR "তোলপাড়" OR "আলোড়ন")',
+        '("ভাইরাল ভিডিও" OR "নেটিজেনদের ক্ষোভ" OR "ফেসবুক পোস্ট ঘিরে" OR "সামাজিক যোগাযোগমাধ্যম")',
+        '("ভাইরাল পোস্ট" OR "কমেন্টের ঝড়" OR "সামাজিক মাধ্যমে তোলপাড়" OR "ফেসবুক স্ট্যাটাস")'
+    ]
+    feeds = [base_url.format(query=urllib.parse.quote(q)) for q in viral_queries]
+    feeds.append("https://trends.google.com/trending/rss?geo=BD")
+    return feeds
+
+VIRAL_FEEDS = build_viral_feeds()
+
+# Combined 360-Degree Master RSS Feeds covering National Media, TV Channels, Local Dailies, All Upazilas, and Viral Topics
+RSS_FEEDS = DIRECT_PORTAL_FEEDS + build_district_feeds() + build_upazila_feeds() + VIRAL_FEEDS
 
 # Brand Details
 BRAND_NAME = "North Voice"

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<style>
+  {{ font_styles | safe }}
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 1080px;
+    height: 1350px;
+    background: #2b343a;
+    font-family: 'SolaimanLipi', 'Kalpurush', sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Photo Section (Top ~48% = 650px) */
+  .image-container {
+    width: 1080px;
+    height: 650px;
+    position: relative;
+    overflow: hidden;
+    background: #1e252b;
+  }
+
+  .main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Bottom Content Block (52% = 700px) - Reference Dark Slate/Charcoal */
+  .content-block {
+    flex: 1;
+    background: #2b343a;
+    background: linear-gradient(180deg, #323c42 0%, #283036 100%);
+    padding: 40px 70px 36px 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    position: relative;
+  }
+
+  /* Centered Category Badge (Reference Golden Yellow) */
+  .badge-box {
+    display: inline-flex;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .category-pill {
+    background: #ffd902;
+    color: #111827;
+    font-size: 26px;
+    font-weight: 800;
+    padding: 6px 36px;
+    border-radius: 4px;
+    font-family: 'SolaimanLipi', sans-serif;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(255, 217, 2, 0.25);
+  }
+
+  /* Headline Section (Centered with Two-Tone White & Vibrant Yellow) */
+  .headline-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .headline {
+    color: #ffffff;
+    font-size: 62px;
+    font-weight: 700;
+    line-height: 1.34;
+    letter-spacing: -0.3px;
+    font-family: 'SolaimanLipi', 'Kalpurush', sans-serif;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    text-align: center;
+  }
+
+  .headline .highlight {
+    color: #ffd902;
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(255, 217, 2, 0.4);
+  }
+
+  /* Footer Bar */
+  .footer-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    padding-top: 24px;
+  }
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-img {
+    height: 58px;
+    width: auto;
+    filter: brightness(0) invert(1);
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .brand-name {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 26px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+
+  .brand-tagline {
+    font-size: 16px;
+    color: #94a3b8;
+    font-weight: 600;
+  }
+
+  /* Right Meta Group with Icons */
+  .meta-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    text-align: left;
+  }
+
+  .qr-box {
+    width: 52px;
+    height: 52px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+  }
+
+  .qr-box svg {
+    width: 100%;
+    height: 100%;
+    fill: #ffffff;
+  }
+
+  .meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 19px;
+    color: #e2e8f0;
+    font-weight: 600;
+    font-family: 'SolaimanLipi', sans-serif;
+    line-height: 1.3;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .meta-item svg {
+    width: 18px;
+    height: 18px;
+    fill: #94a3b8;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+  <div class="image-container">
+    <img src="{{ image_path }}" class="main-image" alt="News Image">
+  </div>
+
+  <div class="content-block">
+    <div class="badge-box">
+      <div class="category-pill">{{ category_or_district }}</div>
+    </div>
+
+    <div class="headline-container">
+      <div class="headline">
+        {{ headline_html | safe }}
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <div class="brand-group">
+        <img src="{{ logo_path }}" class="logo-img" alt="North Voice Logo">
+        <div class="brand-text">
+          <div class="brand-name">NORTH VOICE</div>
+          <div class="brand-tagline">ডিজিটাল সংবাদ মাধ্যম</div>
+        </div>
+      </div>
+
+      <div class="meta-right">
+        <div class="qr-box">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-5 0h2v3h-2v-3zm2 3h3v2h-3v-2zm3 2h3v3h-3v-3zm-5 1h2v2h-2v-2zm2 0h1v2h-1v-2zm3-3h2v1h-2v-1z"/>
+          </svg>
+        </div>
+        <div class="meta-list">
+          <div class="meta-item">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            <span>fb.com/northvoicebd</span>
+          </div>
+          <div class="meta-item">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+            <span>{{ bangla_date }}</span>
+          </div>
+          <div class="meta-item">
+            <svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+            <span>বিস্তারিত কমেন্টে</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

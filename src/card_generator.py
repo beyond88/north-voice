@@ -173,7 +173,7 @@ class CardGenerator:
         template_name = news_data.get("template", "breaking")
         if template_name in ("inqilab", "inqilab_style"):
             template_name = "inqilab_style"
-        elif template_name not in ("breaking", "quote", "general"):
+        elif template_name not in ("breaking", "quote", "general", "viral"):
             template_name = "breaking"
 
         template_file = f"{template_name}.html"
@@ -207,11 +207,22 @@ class CardGenerator:
 
         logo_abs_path = os.path.abspath(self.logo_path)
 
+        # Dynamic category or district for viral pill badge
+        district_val = news_data.get("district", "")
+        if news_data.get("is_viral") or template_name == "viral":
+            if not district_val or district_val in ("বাংলাদেশ", "সারা দেশ", "জাতীয়"):
+                category_or_district = "সারা দেশ"
+            else:
+                category_or_district = district_val
+        else:
+            category_or_district = district_val or "উত্তরবঙ্গ"
+
         render_data = {
             "font_styles": self.font_styles,
             "headline_html": news_data.get("headline_html", news_data.get("title", "")),
             "sub_headline": news_data.get("sub_headline", ""),
-            "district": news_data.get("district", "উত্তরবঙ্গ"),
+            "district": district_val,
+            "category_or_district": category_or_district,
             "speaker_name": news_data.get("speaker_name", ""),
             "speaker_title": news_data.get("speaker_title", ""),
             "source": news_data.get("source", "অনলাইন ডেস্ক"),

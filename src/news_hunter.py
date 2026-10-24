@@ -196,6 +196,15 @@ class NewsHunter:
         else:
             score += 10
 
+        # 6. Facebook Viral & Netizen Buzz Factor (up to 40 pts)
+        viral_triggers = [
+            "ভাইরাল", "ফেসবুকে তোলপাড়", "ফেসবুকে তোলপাড়", "ভিডিও ভাইরাল",
+            "সামাজিক যোগাযোগমাধ্যম", "সামাজিক মাধ্যমে", "নেটিজেনদের", "আলোড়ন",
+            "আলোড়ন", "ফেসবুক পোস্ট ঘিরে", "ফেসবুকে পোস্ট", "ভিডিও ছড়িয়ে", "ভিডিও ছড়িয়ে পড়ায়", "কমেন্টের ঝড়"
+        ]
+        if item.get("is_viral") or any(vt in text for vt in viral_triggers):
+            score += 40
+
         return score
 
     def _parse_single_feed(self, feed_url: str) -> List[Dict]:
@@ -243,21 +252,32 @@ class NewsHunter:
                         if not source_title or "Google" in source_title or source_title == "অনলাইন ডেস্ক":
                             source_title = parts[1].strip()
 
-                # Filter for North Bengal location relevance
+                # Check for Facebook Viral Topics across Whole Bangladesh
                 full_text = f"{title} {full_body}"
+                text_lower = full_text.lower()
+                viral_triggers = [
+                    "ভাইরাল", "ফেসবুকে তোলপাড়", "ফেসবুকে তোলপাড়", "ভিডিও ভাইরাল",
+                    "সামাজিক যোগাযোগমাধ্যম", "সামাজিক মাধ্যমে", "নেটিজেনদের", "আলোড়ন",
+                    "আলোড়ন", "ফেসবুক পোস্ট ঘিরে", "ফেসবুকে পোস্ট", "ভিডিও ছড়িয়ে", "ভিডিও ছড়িয়ে পড়ায়", "কমেন্টের ঝড়"
+                ]
+                is_viral = any(vt in text_lower for vt in viral_triggers)
+
+                # Filter for location relevance (North Bengal) OR Whole Bangladesh Viral Topics
                 matched_district, matched_upazila = self.match_location(full_text)
 
-                if matched_district or matched_upazila:
+                if matched_district or matched_upazila or is_viral:
                     image_url = self.extract_image(entry)
                     candidate = {
                         "title": title,
                         "summary": full_body[:2500],
                         "link": link,
-                        "district": matched_district or "উত্তরবঙ্গ",
+                        "district": matched_district or ("সারা দেশ" if is_viral else "উত্তরবঙ্গ"),
                         "upazila": matched_upazila,
                         "image_url": image_url,
                         "source": source_title,
-                        "published": entry.get("published", "")
+                        "published": entry.get("published", ""),
+                        "is_viral": is_viral,
+                        "template": "viral" if is_viral else "breaking"
                     }
                     candidate["reach_score"] = self.calculate_virality_score(candidate)
                     items.append(candidate)
