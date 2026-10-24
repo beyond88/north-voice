@@ -56,7 +56,6 @@ DIRECT_PORTAL_FEEDS = [
     "https://www.ittefaq.com.bd/feed/",
     "https://www.jagonews24.com/rss/rss.xml",
     "https://www.banglatribune.com/feed/",
-    "https://www.bd-pratidin.com/rss.xml",
     "https://www.dhakapost.com/rss/rss.xml",
     "https://www.thedailystar.net/rss.xml"
 ]

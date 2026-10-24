@@ -191,10 +191,17 @@ class NewsHunter:
         return score
 
     def _parse_single_feed(self, feed_url: str) -> List[Dict]:
-        """Parses a single RSS feed and extracts potential North Bengal news entries."""
+        """Parses a single RSS feed fast using requests with a strict 5s timeout."""
         items = []
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
         try:
-            feed = feedparser.parse(feed_url)
+            res = requests.get(feed_url, headers=headers, timeout=5)
+            if res.status_code != 200 or len(res.content) < 50:
+                return items
+
+            feed = feedparser.parse(res.content)
             default_source = feed.feed.get("title", "অনলাইন ডেস্ক")
 
             for entry in feed.entries:
