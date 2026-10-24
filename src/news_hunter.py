@@ -1,6 +1,7 @@
 import re
 import logging
 from typing import List, Dict, Optional
+import requests
 import feedparser
 from bs4 import BeautifulSoup
 from src.config import RSS_FEEDS, NORTH_BENGAL_DISTRICTS
@@ -44,6 +45,27 @@ class NewsHunter:
             if img and img.get("src"):
                 return img["src"]
 
+        return None
+
+    def fetch_og_image(self, url: str) -> Optional[str]:
+        """Fetches high-res og:image or twitter:image from article webpage as fallback."""
+        if not url:
+            return None
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            res = requests.get(url, headers=headers, timeout=6, allow_redirects=True)
+            if res.status_code == 200:
+                soup = BeautifulSoup(res.text, "html.parser")
+                for prop in ["og:image", "og:image:url", "og:image:secure_url", "twitter:image"]:
+                    tag = soup.find("meta", property=prop) or soup.find("meta", attrs={"name": prop})
+                    if tag and tag.get("content"):
+                        img = tag["content"].strip()
+                        if img.startswith("http") and not any(bad in img.lower() for bad in ["default", "placeholder", "blank", "facebook-share"]):
+                            return img
+        except Exception as e:
+            logger.debug(f"Could not fetch og:image from {url}: {e}")
         return None
 
     def match_district(self, text: str) -> Optional[str]:

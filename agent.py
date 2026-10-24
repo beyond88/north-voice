@@ -53,6 +53,17 @@ def run_agent():
             logger.info(f"Skipping already posted news: {link}")
             continue
 
+        # Step 2.5: Verify real news photo (fetch og:image if missing from RSS)
+        if not item.get("image_url"):
+            logger.info(f"No RSS image found for '{title[:40]}'. Attempting to extract og:image from source...")
+            og_img = hunter.fetch_og_image(link)
+            if og_img:
+                item["image_url"] = og_img
+                logger.info(f"Retrieved real news photo from webpage: {og_img[:60]}...")
+            else:
+                logger.warning(f"No real news image found for '{title[:40]}'. Skipping to maintain premium visual standard.")
+                continue
+
         # Step 3: AI Editing & Formatting (Gemini)
         logger.info("Passing news to Gemini AI Editor...")
         analysis = editor.analyze_news(item)

@@ -107,14 +107,16 @@ class CardGenerator:
     def download_image(self, url: str, output_path: str) -> bool:
         """Downloads external news image with proper user-agent headers."""
         headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         try:
-            r = requests.get(url, headers=headers, timeout=10)
+            r = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
             if r.status_code == 200 and len(r.content) > 1000:
                 with open(output_path, "wb") as f:
                     f.write(r.content)
                 return True
+            else:
+                logger.warning(f"Image download failed ({r.status_code}, len={len(r.content)}): {url}")
         except Exception as e:
             logger.error(f"Failed to download image {url}: {e}")
         return False
@@ -137,7 +139,7 @@ class CardGenerator:
             logger.error(f"Template not found: {template_file}, error: {e}")
             template = self.env.get_template("breaking.html")
 
-        # Handle image
+        # Handle image - A real photo is strictly required to avoid black background placeholders
         timestamp = int(time.time())
         temp_img_path = os.path.join(output_dir, f"temp_news_{timestamp}.jpg")
         image_url = news_data.get("image_url")
@@ -146,7 +148,8 @@ class CardGenerator:
         if image_url and (os.path.exists(image_url) or self.download_image(image_url, temp_img_path)):
             final_image_path = os.path.abspath(image_url if os.path.exists(image_url) else temp_img_path)
         else:
-            final_image_path = os.path.abspath(self.logo_path)
+            logger.error(f"Photocard generation skipped: No valid news photo could be downloaded for '{news_data.get('title', '')[:40]}'.")
+            return None
 
         logo_abs_path = os.path.abspath(self.logo_path)
 
