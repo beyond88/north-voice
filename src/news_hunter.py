@@ -72,6 +72,15 @@ class NewsHunter:
                     raw_title = self.clean_html(entry.get("title", ""))
                     summary = self.clean_html(entry.get("summary", "") or entry.get("description", ""))
 
+                    # Extract full content body if available from RSS
+                    content_text = ""
+                    if "content" in entry and entry["content"]:
+                        for c in entry["content"]:
+                            if isinstance(c, dict) and "value" in c:
+                                content_text += " " + self.clean_html(c["value"])
+
+                    full_body = content_text.strip() if len(content_text.strip()) > len(summary) else summary
+
                     # Extract actual media house / TV channel source name
                     source_title = default_source
                     if "source" in entry and isinstance(entry["source"], dict) and entry["source"].get("title"):
@@ -87,14 +96,14 @@ class NewsHunter:
                                 source_title = parts[1].strip()
 
                     # Filter for North Bengal relevance
-                    full_text = f"{title} {summary}"
+                    full_text = f"{title} {full_body}"
                     matched_district = self.match_district(full_text)
 
                     if matched_district:
                         image_url = self.extract_image(entry)
                         candidates.append({
                             "title": title,
-                            "summary": summary[:400],
+                            "summary": full_body[:2500],
                             "link": link,
                             "district": matched_district,
                             "image_url": image_url,
