@@ -5,7 +5,7 @@ import sys
 from src.config import MAX_POSTS_PER_RUN, DRY_RUN
 from src.db import Database
 from src.news_hunter import NewsHunter
-from src.ai_editor import AIEditor
+from src.ai_editor import AIEditor, clean_fb_caption
 from src.card_generator import CardGenerator
 from src.fb_poster import FacebookPoster
 
@@ -106,6 +106,7 @@ def run_agent():
 
         # Step 4.4: Post to Facebook Page Feed
         caption = news_payload.get("fb_caption", f"{title}\n\n#NorthVoice #উত্তরবঙ্গ")
+        caption = clean_fb_caption(caption)
         logger.info("Publishing to Facebook...")
         fb_post_id = poster.post_photocard(card_image_path, caption)
 

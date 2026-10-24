@@ -8,6 +8,28 @@ from src.config import GEMINI_API_KEY, BRAND_NAME, BRAND_HANDLE
 
 logger = logging.getLogger(__name__)
 
+def clean_fb_caption(caption: str) -> str:
+    """
+    Removes any artificial category headers like 'ভাইরাল সংবাদ | সারা দেশ' 
+    or 'ব্রেকিং নিউজ | সিংড়া, নাটোর' from the start of fb_caption.
+    Ensures the Facebook post starts directly with the headline or story lead.
+    """
+    if not caption:
+        return ""
+    lines = caption.strip().splitlines()
+    if lines:
+        first_line = lines[0].strip()
+        header_keywords = [
+            "ভাইরাল সংবাদ", "ব্রেকিং নিউজ", "রাজনীতি ও সমসাময়িক", 
+            "উত্তরবঙ্গ সমাচার", "বিশেষ বক্তব্য", "সারা দেশ", "ব্রেকিং"
+        ]
+        if any(kw in first_line for kw in header_keywords) and ("|" in first_line or ":" in first_line or "—" in first_line):
+            lines = lines[1:]
+            while lines and not lines[0].strip():
+                lines = lines[1:]
+            return "\n".join(lines).strip()
+    return caption.strip()
+
 class AIEditor:
     def __init__(self):
         self.client = None
@@ -94,7 +116,6 @@ class AIEditor:
 
         upazila_tag = f"#{upazila} " if upazila else ""
         caption = (
-            f"{header_badge}\n\n"
             f"{title}\n\n"
             f"{formatted_body}\n\n"
             f"আপনার মতামত:\n"
@@ -161,6 +182,7 @@ class AIEditor:
 ৪. কঠোরভাবে নিষিদ্ধ:
    - কোনো প্রকার ইমোজি বা আইকন (🚨, 👉, 🔹, 💬, 📰, 📌 ইত্যাদি) ব্যবহার করা যাবে না।
    - কোনো চটুল বা এআই-ক্লিশে বাক্য (যেমন: 'আসুন জেনে নেই', 'চলুন দেখে নেওয়া যাক', 'আমাদের সাথেই থাকুন', 'এটি অত্যন্ত গুরুত্বপূর্ণ একটি বিষয়', 'আলোচনার ঝড় উঠেছে') লেখা যাবে না।
+   - ক্যাপশনের শুরুতে কোনো প্রকার হেডার বা ক্যাটাগরি লাইন (যেমন: 'ভাইরাল সংবাদ | সারা দেশ', 'ব্রেকিং নিউজ | সিংড়া, নাটোর', 'রাজনীতি ও সমসাময়িক | রংপুর' ইত্যাদি) লেখা সম্পূর্ণ নিষিদ্ধ। পোস্ট সরাসরি মূল সংবাদের আকর্ষণীয় শিরোনাম বা প্রারম্ভিক উপস্থাপনা দিয়ে শুরু হবে।
 
 ৫. ধারাবাহিক ও ক্রমবিকাশমান সংবাদ মূল্যায়ন (Evolving Storyline Arc Tracking):
 আমাদের পেজে সম্প্রতি প্রকাশিত সংবাদের শিরোনামসমূহ:
@@ -184,9 +206,7 @@ class AIEditor:
 - সূত্র: {source}
 
 ফেসবুক ক্যাপশনের ফরম্যাট (fb_caption):
-[হেডার: {'ভাইরাল সংবাদ | ' + loc_display if is_viral else 'ব্রেকিং নিউজ | ' + loc_display}]
-
-[শিরোনাম ও প্রারম্ভিক উপস্থাপনা - সম্পূর্ণ মৌলিক ভাষায়]
+[সংবাদের শিরোনাম বা আকর্ষণীয় প্রারম্ভিক উপস্থাপনা - সম্পূর্ণ মৌলিক ভাষায় (কোনো হেডার বা ক্যাটাগরি লাইন ছাড়া)]
 
 [মূল বিবরণ - মৌলিক বাক্যগঠনে অনুচ্ছেদসমূহ, প্রতিটি প্যারার মাঝে ফাঁকা লাইন]
 
@@ -239,6 +259,8 @@ class AIEditor:
                     raw_text = "\n".join(lines).strip()
 
                 data = json.loads(raw_text)
+                if "fb_caption" in data and data["fb_caption"]:
+                    data["fb_caption"] = clean_fb_caption(data["fb_caption"])
                 logger.info(f"AI Editor successfully drafted humanized news using template: '{data.get('template')}' for '{title[:30]}...'")
                 return data
             except Exception as e:
