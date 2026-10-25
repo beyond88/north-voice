@@ -78,7 +78,7 @@ class AIEditor:
 
         return "\n\n".join(paragraphs)
 
-    def fallback_analyze(self, title: str, summary: str, source: str, district: str, upazila: Optional[str] = None, is_viral: bool = False, recent_headlines: Optional[list] = None) -> Dict:
+    def fallback_analyze(self, title: str, summary: str, source: str, district: str, upazila: Optional[str] = None, is_viral: bool = False, is_international: bool = False, recent_headlines: Optional[list] = None) -> Dict:
         """Intelligently routes news to templates without emojis/icons in clean journalistic style."""
         # Enforce multi-stage deduplication even in fallback editor
         if recent_headlines:
@@ -93,46 +93,56 @@ class AIEditor:
 
         full_text = f"{title} {summary}"
         loc_display = f"{upazila}, {district}" if upazila else district
-        subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
 
-        # 1. Facebook Viral Topics (Yellow Badge + Dark Slate Card - Whole Bangladesh)
-        viral_triggers = ["ভাইরাল", "তোলপাড়", "তোলপাড়", "আলোড়ন", "সামাজিক যোগাযোগমাধ্যম", "নেটিজেনদের", "ভিডিও ছড়িয়ে"]
-        if is_viral or any(vt in full_text.lower() for vt in viral_triggers):
+        # 1. International News (Yellow Badge + Dark Slate Card - Global)
+        if district == "আন্তর্জাতিক" or is_international:
             template = "viral"
-            header_badge = f"ভাইরাল সংবাদ | {loc_display}"
-            cta_question = f"সামাজিক যোগাযোগমাধ্যমে তোলপাড় সৃষ্টি করা এই ঘটনাটিকে আপনি কীভাবে দেখছেন? আপনার সুচিন্তিত মতামত কমেন্টে জানান।"
-        # 2. Quote Card (Dark Editorial)
+            subhead = "আন্তর্জাতিক"
+            cta_question = "আন্তর্জাতিক এই ঘটনাটিকে আপনি কীভাবে দেখছেন? আপনার মতামত কমেন্টে জানান।"
+            hashtags = "#NorthVoice #আন্তর্জাতিক #InternationalNews #Viral"
+        # 2. Facebook Viral Topics (Yellow Badge + Dark Slate Card - Whole Bangladesh)
+        elif is_viral or any(vt in full_text.lower() for vt in ["ভাইরাল", "তোলপাড়", "তোলপাড়", "আলোড়ন", "সামাজিক যোগাযোগমাধ্যম", "নেটিজেনদের", "ভিডিও ছড়িয়ে"]):
+            template = "viral"
+            subhead = "সারা দেশ"
+            cta_question = "সামাজিক যোগাযোগমাধ্যমে তোলপাড় সৃষ্টি করা এই ঘটনাটিকে আপনি কীভাবে দেখছেন? আপনার সুচিন্তিত মতামত কমেন্টে জানান।"
+            upazila_tag = f"#{upazila} " if upazila else ""
+            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#Viral #BangladeshNews"
+        # 3. Quote Card (Dark Editorial)
         elif any(w in full_text for w in ["বলেন", "মন্তব্য", "দাবি করেন", "হুশিয়ারি", "উক্তি", "ঘোষণা"]):
             template = "quote"
-            header_badge = f"বিশেষ বক্তব্য | {loc_display}"
+            subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
             cta_question = f"বক্তার এই বক্তব্যের সাথে আপনি কি একমত? আপনার যুক্তিযুক্ত মতামত কমেন্টে তুলে ধরুন।"
-        # 3. Inqilab Style (Politics, bilateral, governance)
+            upazila_tag = f"#{upazila} " if upazila else ""
+            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
+        # 4. Inqilab Style (Politics, bilateral, governance)
         elif any(w in full_text for w in ["রাজনীতি", "সীমান্ত", "তিস্তা", "নির্বাচন", "বিএনপি", "জামায়াত", "সরকার", "আন্দোলন"]):
             template = "inqilab_style"
-            header_badge = f"রাজনীতি ও সমসাময়িক | {loc_display}"
+            subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
             cta_question = f"এই সমসাময়িক প্রেক্ষাপট নিয়ে আপনার মূল্যায়ন কী? কমেন্টে আলোচনা করুন।"
-        # 4. Signature Crimson Photocard (Breaking, Development, Agriculture, Crime, Human Interest)
+            upazila_tag = f"#{upazila} " if upazila else ""
+            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
+        # 5. Signature Crimson Photocard (Breaking, Development, Agriculture, Crime, Human Interest)
         else:
             template = "breaking"
+            subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
             if any(w in full_text for w in ["নিহত", "আহত", "দুর্ঘটনা", "গ্রেপ্তার", "আটক", "আগুন", "ডাকাতি", "খুন", "অবরোধ"]):
-                header_badge = f"ব্রেকিং নিউজ | {loc_display}"
                 cta_question = f"এ বিষয়ে আপনার এলাকার সার্বিক পরিস্থিতি সম্পর্কে আপনার মতামত কমেন্টে জানান।"
             else:
-                header_badge = f"উত্তরবঙ্গ সমাচার | {loc_display}"
                 cta_question = f"উত্তরবঙ্গের সামগ্রিক উন্নয়নে এমন উদ্যোগ কতটা গুরুত্বপূর্ণ বলে আপনি মনে করেন? আপনার অভিজ্ঞতা শেয়ার করুন।"
+            upazila_tag = f"#{upazila} " if upazila else ""
+            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
 
         formatted_body = self.format_clean_story(summary, max_chars=900)
         if not formatted_body:
             formatted_body = title
 
-        upazila_tag = f"#{upazila} " if upazila else ""
         caption = (
             f"{title}\n\n"
             f"{formatted_body}\n\n"
             f"আপনার মতামত:\n"
             f"{cta_question}\n\n"
             f"তথ্যসূত্র: {source}\n\n"
-            f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
+            f"{hashtags}"
         )
 
         return {
@@ -159,10 +169,24 @@ class AIEditor:
         district = news_item.get("district", "উত্তরবঙ্গ")
         upazila = news_item.get("upazila")
         is_viral = news_item.get("is_viral", False)
-        loc_display = f"{upazila}, {district}" if upazila else district
+        is_international = news_item.get("is_international", False) or district == "আন্তর্জাতিক"
+        loc_display = "আন্তর্জাতিক" if is_international else (f"{upazila}, {district}" if upazila else district)
 
         if not self.client:
-            return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, recent_headlines=recent_headlines)
+            return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, is_international=is_international, recent_headlines=recent_headlines)
+
+        if is_international:
+            category_text = "আন্তর্জাতিক সংবাদ (বিদেশের ঘটনা)"
+            default_subhead = "আন্তর্জাতিক"
+            hashtags_template = "#NorthVoice #আন্তর্জাতিক #InternationalNews #Viral"
+        elif is_viral:
+            category_text = "ফেসবুক ভাইরাল সংবাদ (সারা বাংলাদেশ)"
+            default_subhead = "সারা দেশ"
+            hashtags_template = f"#NorthVoice #উত্তরবঙ্গ #{district} #{upazila if upazila else ''} #Viral #BangladeshNews"
+        else:
+            category_text = "আঞ্চলিক সংবাদ (উত্তরবঙ্গ)"
+            default_subhead = f"{upazila} বার্তা" if upazila else f"{district} বার্তা"
+            hashtags_template = f"#NorthVoice #উত্তরবঙ্গ #{district} #{upazila if upazila else ''} #BangladeshNews"
 
         recent_headlines_block = ""
         if recent_headlines:
@@ -186,14 +210,16 @@ class AIEditor:
 
 ৩. সংবাদের গভীরতা অনুযায়ী কাঠামো বিন্যাস:
    - ফেসবুক ভাইরাল বা আলোচিত সংবাদ: কেন এটি সামাজিক মাধ্যমে তোলপাড় বা ক্ষোভের সৃষ্টি করেছে এবং নেটিজেনদের কী প্রতিক্রিয়া তা তুলে ধরবে।
+   - আন্তর্জাতিক সংবাদ: ঘটনাটি কোন দেশের এবং সামাজিক মাধ্যমে কেন ছড়িয়ে পড়েছে তা তুলে ধরবে।
    - বিস্তারিত সংবাদ (উন্নয়ন, অর্থনীতি, প্রকল্প, রাজনীতি, ফিচার): ৩-৫টি পরিচ্ছন্ন অনুচ্ছেদে রূপ দেবে। প্রয়োজন অনুযায়ী অর্থবহ সাব-হেডলাইন ব্যবহার করবে।
    - ব্রেকিং বা দুর্ঘটনা/অপরাধ: কোনো বাহুল্য ছাড়া দ্রুত ও ধারালো ২-৩ অনুচ্ছেদে মূল তথ্য তুলে ধরবে।
    - প্রতিটি অনুচ্ছেদ ২-৩ বাক্যের মধ্যে রাখবে এবং অনুচ্ছেদগুলোর মাঝে ডাবল ফাঁকা লাইন দেবে।
 
-৪. কঠোরভাবে নিষিদ্ধ:
+৪. কঠোরভাবে নিষিদ্ধ ও ক্যাটাগরি বিধি:
    - কোনো প্রকার ইমোজি বা আইকন (🚨, 👉, 🔹, 💬, 📰, 📌 ইত্যাদি) ব্যবহার করা যাবে না।
-   - কোনো চটুল বা এআই-ক্লিশে বাক্য (যেমন: 'আসুন জেনে নেই', 'চলুন দেখে নেওয়া যাক', 'আমাদের সাথেই থাকুন', 'এটি অত্যন্ত গুরুত্বপূর্ণ একটি বিষয়', 'আলোচনার ঝড় উঠেছে') লেখা যাবে না।
-   - ক্যাপশনের শুরুতে কোনো প্রকার হেডার বা ক্যাটাগরি লাইন (যেমন: 'ভাইরাল সংবাদ | সারা দেশ', 'ব্রেকিং নিউজ | সিংড়া, নাটোর', 'রাজনীতি ও সমসাময়িক | রংপুর' ইত্যাদি) লেখা সম্পূর্ণ নিষিদ্ধ। পোস্ট সরাসরি মূল সংবাদের আকর্ষণীয় শিরোনাম বা প্রারম্ভিক উপস্থাপনা দিয়ে শুরু হবে।
+   - কোনো চটুল বা এআই-ক্লিশে বাক্য (যেমন: 'আসুন জেনে নেই', 'চলুন দেখে নেওয়া যাক', 'আমাদের সাথেই থাকুন', 'আলোচনার ঝড় উঠেছে') লেখা যাবে না।
+   - ক্যাপশনের শুরুতে কোনো প্রকার হেডার বা ক্যাটাগরি লাইন (যেমন: 'ভাইরাল সংবাদ | সারা দেশ', 'ব্রেকিং নিউজ | সিংড়া, নাটোর', 'আন্তর্জাতিক' ইত্যাদি) লেখা সম্পূর্ণ নিষিদ্ধ। পোস্ট সরাসরি মূল সংবাদের আকর্ষণীয় শিরোনাম বা প্রারম্ভিক উপস্থাপনা দিয়ে শুরু হবে।
+   - অত্যন্ত গুরুত্বপূর্ণ (সাব-হেডলাইন ও ফটোকার্ড ব্যাজ): যদি ঘটনাটি বিদেশের/আন্তর্জাতিক হয় (যেমন: চীন, ভারত, মধ্যপ্রাচ্য, ইউরোপ, যুক্তরাষ্ট্র ইত্যাদি), তবে sub_headline এবং ফটোকার্ডের গোল্ডেন পিল ব্যাজ অবশ্যই 'আন্তর্জাতিক' হতে হবে। কখনোই 'সারা দেশ' লেখা যাবে না!
 
 ৫. ধারাবাহিক ও ক্রমবিকাশমান সংবাদ মূল্যায়ন (Evolving Storyline Arc Tracking):
 আমাদের পেজে সম্প্রতি প্রকাশিত সংবাদের শিরোনামসমূহ:
@@ -213,7 +239,7 @@ class AIEditor:
 - শিরোনাম: {title}
 - মূল বিবরণ ও তথ্যসমূহ: {summary}
 - এলাকা: {loc_display}
-- ক্যাটাগরি: {'ফেসবুক ভাইরাল সংবাদ (সারা বাংলাদেশ)' if is_viral else 'আঞ্চলিক সংবাদ (উত্তরবঙ্গ)'}
+- ক্যাটাগরি: {category_text}
 - সূত্র: {source}
 
 ফেসবুক ক্যাপশনের ফরম্যাট (fb_caption):
@@ -226,12 +252,12 @@ class AIEditor:
 
 তথ্যসূত্র: {source}
 
-#NorthVoice #উত্তরবঙ্গ #{district} #{upazila if upazila else ''} #Viral #BangladeshNews
+{hashtags_template}
 
 ফটোকার্ডের তথ্য (template ও headline_html):
-- template: {'viral' if is_viral else "'breaking' (North Voice এর প্রধান সিগনেচার ক্রিমসন কার্ড) | 'quote' (বক্তব্য/উক্তি) | 'inqilab_style' (রাজনীতি/শাসনব্যবস্থা)"}
+- template: {'viral' if (is_viral or is_international) else "'breaking' (North Voice এর প্রধান সিগনেচার ক্রিমসন কার্ড) | 'quote' (বক্তব্য/উক্তি) | 'inqilab_style' (রাজনীতি/শাসনব্যবস্থা)"}
 - headline_html: ফটোকার্ডের জন্য অত্যন্ত আকর্ষণীয় ও সংক্ষিপ্ত (২-৩ লাইন) হেডলাইন। মূল শব্দগুচ্ছকে <span class="highlight">শব্দ</span> দিয়ে মার্ক করবে।
-- sub_headline: "{'সারা দেশ' if is_viral and not upazila else (upazila + ' বার্তা' if upazila else district + ' বার্তা')}"
+- sub_headline: "{default_subhead}"
 
 নিচের JSON ফরম্যাটে সরাসরি উত্তর প্রদান করো (অন্য কোনো টেক্সট বা মার্কডাউন ছাড়া):
 {{
@@ -239,7 +265,7 @@ class AIEditor:
   "reason": "কারণ (যদি is_relevant false হয়)",
   "template": "viral" | "breaking" | "quote" | "inqilab_style",
   "headline_html": "হেডলাইন টেক্সট <span class='highlight'>হাইলাইট</span> সহ...",
-  "sub_headline": "{'সারা দেশ' if is_viral and not upazila else (upazila if upazila else district) + ' বার্তা'}",
+  "sub_headline": "{default_subhead}",
   "speaker_name": "বক্তার নাম (শুধুমাত্র quote টেমপ্লেটে)",
   "speaker_title": "বক্তার পদবি (শুধুমাত্র quote টেমপ্লেটে)",
   "fb_caption": "সম্পূর্ণ মৌলিক, মানবীয় ভাষায় রচিত ১০০% ইমোজিহীন ফেসবুক ক্যাপশন...",
@@ -281,4 +307,4 @@ class AIEditor:
                     time.sleep(2)
 
         logger.error(f"All Gemini models failed. Last error: {last_error}. Using fallback editor.")
-        return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, recent_headlines=recent_headlines)
+        return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, is_international=is_international, recent_headlines=recent_headlines)

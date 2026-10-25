@@ -230,7 +230,14 @@ class CardGenerator:
 
         # Dynamic category or district for viral pill badge
         district_val = news_data.get("district", "")
-        if news_data.get("is_viral") or template_name == "viral":
+        subhead_val = news_data.get("sub_headline", "")
+        is_intl = news_data.get("is_international") or district_val == "আন্তর্জাতিক" or subhead_val == "আন্তর্জাতিক"
+
+        if is_intl:
+            category_or_district = "আন্তর্জাতিক"
+        elif subhead_val in ("সর্বশেষ আপডেট", "তদন্ত ও পদক্ষেপ", "আইনি পদক্ষেপ"):
+            category_or_district = subhead_val
+        elif news_data.get("is_viral") or template_name == "viral":
             if not district_val or district_val in ("বাংলাদেশ", "সারা দেশ", "জাতীয়"):
                 category_or_district = "সারা দেশ"
             else:
