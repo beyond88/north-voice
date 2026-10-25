@@ -9,6 +9,7 @@ from src.news_hunter import NewsHunter, is_valid_image_url
 from src.ai_editor import AIEditor, clean_fb_caption
 from src.card_generator import CardGenerator
 from src.fb_poster import FacebookPoster
+from src.spam_checker import PostSpamAuditor
 
 # Setup logging
 logging.basicConfig(
@@ -131,18 +132,33 @@ def run_agent():
             logger.warning(f"Photocard generation skipped for '{title[:40]}'. Trying next candidate with authentic photo...")
             continue
 
-        # Step 4.4: Post to Facebook Page Feed
+        # Step 4.4: Pre-Posting Facebook Spam Score Audit
         caption = news_payload.get("fb_caption", f"{title}\n\n#NorthVoice #উত্তরবঙ্গ")
         caption = clean_fb_caption(caption)
+
+        spam_score, spam_issues, is_safe = PostSpamAuditor.audit_post(
+            news_payload=news_payload,
+            image_path=card_image_path,
+            caption=caption,
+            recent_headlines=recent_headlines
+        )
+
+        if not is_safe:
+            logger.warning(f"🚨 Pre-Post Spam Audit REJECTED post [Spam Score: {spam_score}/100]. Issues: {spam_issues}. Skipping to prevent Facebook spam penalty.")
+            continue
+
+        logger.info(f"🛡️ Facebook Pre-Post Spam Audit PASSED [Spam Score: {spam_score}/100 - Clean & Safe]")
+
+        # Step 4.5: Post to Facebook Page Feed
         logger.info("Publishing to Facebook...")
         fb_post_id = poster.post_photocard(card_image_path, caption)
 
         if fb_post_id:
-            # Step 4.5: Post official first comment on the post
+            # Step 4.6: Post official first comment on the post
             first_comment = "উত্তরবঙ্গের প্রতিটি জনপদের নির্ভরযোগ্য খবরের জন্য আমাদের পেজে Follow দিয়ে যুক্ত থাকুন: https://facebook.com/northvoicebd"
             poster.post_comment(fb_post_id, first_comment)
 
-            # Step 4.6: Save signatures to Supabase
+            # Step 4.7: Save signatures to Supabase
             headline = news_payload.get("headline_html", title)
             db.save_post(news_url=item["link"], headline=headline, fb_post_id=fb_post_id)
             if link != item["link"]:

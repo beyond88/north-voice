@@ -8,37 +8,40 @@ from src.config import SUPABASE_URL, SUPABASE_KEY
 
 logger = logging.getLogger(__name__)
 
+def normalize_bengali_word(w: str) -> str:
+    """Strips Bengali inflectional suffixes (genitive, locative, plural) for deep semantic matching."""
+    w = w.replace("হাড়", "হাড়").replace("ভাঙল", "ভেঙে").replace("আটক", "গ্রেপ্তার")
+    suffixes = ["গুলোর", "গুলো", "দের", "ের", "কে", "তে", "র", "য়", "ে"]
+    for suf in suffixes:
+        if len(w) > len(suf) + 2 and w.endswith(suf):
+            return w[:-len(suf)]
+    return w
+
 def extract_story_tokens(text: str) -> set:
     if not text:
         return set()
     clean = re.sub(r"<[^>]+>", " ", text)
     clean = re.sub(r"\s*-\s*[^-]+$", "", clean)
-    clean = clean.replace("হাড়", "হাড়").replace("ভাঙল", "ভেঙে").replace("স্ত্রী", "স্ত্রীর").replace("আটক", "গ্রেপ্তার")
+    clean = clean.replace("হাড়", "হাড়").replace("ভাঙল", "ভেঙে")
     words = re.findall(r"[\u0980-\u09FFa-zA-Z0-9]+", clean.lower())
     stopwords = {
         "ও", "এবং", "বা", "সহ", "১", "২", "৩", "৪", "৫", "ভিডিও", "ভাইরাল", 
         "এক", "এই", "সেই", "নিয়ে", "পর", "হলো", "হলে", "থেকে", "করে", 
         "হয়েছে", "বার্তা", "সংবাদ", "খবর", "উত্তরবঙ্গ", "সারা", "দেশ"
     }
-    return {w for w in words if w not in stopwords and len(w) > 1}
+    raw_tokens = {w for w in words if w not in stopwords and len(w) > 1}
+    normalized = {normalize_bengali_word(w) for w in raw_tokens}
+    return raw_tokens.union(normalized)
 
 def is_duplicate_story(candidate_title: str, candidate_summary: str, recent_headlines: list) -> Tuple[bool, str]:
     """
     Checks whether a candidate news item is about the exact same story as any recently published headline.
-    Enforces the rule: Same topic cannot be repeated unless there is an authentic subsequent stage/development.
+    STRICT ANTI-SPAM POLICY: One post per topic. No next stage or subsequent updates to prevent Facebook spam classification.
     Returns (is_duplicate: bool, reason: str).
     """
     cand_tokens = extract_story_tokens(candidate_title)
     if not cand_tokens:
         return False, ""
-
-    full_candidate_text = f"{candidate_title} {candidate_summary}"
-    
-    NEXT_STAGE_KEYWORDS = [
-        "তদন্ত কমিটি", "তদন্ত", "গ্রেপ্তার", "আটক", "মামলা",
-        "প্রত্যাহার", "ওএসডি", "অ্যাকশন", "আইনি পদক্ষেপ", "নতুন মোড়",
-        "সর্বশেষ আপডেট", "রিমান্ড", "উদ্ধার", "স্বীকারোক্তি", "বহিষ্কার"
-    ]
 
     for prev in recent_headlines:
         prev_tokens = extract_story_tokens(prev)
@@ -50,15 +53,8 @@ def is_duplicate_story(candidate_title: str, candidate_summary: str, recent_head
         jaccard = len(overlap) / min_len if min_len > 0 else 0
         seq_ratio = difflib.SequenceMatcher(None, candidate_title, prev).ratio()
 
-        if jaccard >= 0.40 or seq_ratio >= 0.50 or len(overlap) >= 3:
-            matching_stages = [kw for kw in NEXT_STAGE_KEYWORDS if kw in full_candidate_text]
-            has_new_stage = bool(matching_stages)
-            prev_has_same_stage = any(kw in prev for kw in matching_stages)
-            
-            if has_new_stage and not prev_has_same_stage:
-                return False, f"নতুন স্টেজ বা অগ্রগতি ({matching_stages})"
-            else:
-                return True, f"একই ঘটনার পুনরাবৃত্তি (পূর্বে প্রকাশিত: '{prev[:35]}...', ওভারল্যাপ: {overlap})"
+        if jaccard >= 0.28 or seq_ratio >= 0.45 or len(overlap) >= 3:
+            return True, f"ফেসবুক স্প্যাম ফিল্টার সুরক্ষায় একই বিষয়ের খবর একবারই পোস্ট হবে। পূর্বে প্রকাশিত: '{prev[:35]}...' (ওভারল্যাপ: {overlap})"
 
     return False, ""
 
