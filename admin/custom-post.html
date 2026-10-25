@@ -40,6 +40,30 @@
         min-height: 480px;
         border: 1px solid var(--border);
       }
+      .tmpl-pill {
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 12.5px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: var(--bg-surface, #fff);
+        color: var(--t-primary, #0f172a);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .tmpl-pill:hover {
+        border-color: #EF4444;
+        color: #EF4444;
+      }
+      .tmpl-pill.active {
+        background: #EF4444;
+        color: #ffffff;
+        border-color: #EF4444;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+      }
     </style>
   </head>
   <body data-active="custom-post" data-crumbs="সংবাদ ব্যবস্থাপনা | কাস্টম পোস্ট স্টুডিও">
@@ -69,15 +93,19 @@
                 <input type="text" id="custTitle" class="input" placeholder="আকর্ষণীয় শিরোনাম লিখুন..." required oninput="debouncePreview()">
               </div>
 
-              <div class="field" style="margin-bottom: 14px;">
-                <label class="field-label">ফটোকার্ডের টেমপ্লেট নির্বাচন করুন</label>
-                <select id="custTemplate" class="input" onchange="toggleQuoteFields(); debouncePreview();">
-                  <option value="viral">Viral (ডার্ক স্লেট ব্লু ও সোনালী পিল ব্যাজ)</option>
-                  <option value="breaking">Breaking (সিগনেচার ক্রিমসন/লাল ব্যাকগ্রাউন্ড)</option>
-                  <option value="inqilab_style">Inqilab Style (ক্ল্যাসিক সম্পাদকীয় ব্রডশিট)</option>
-                  <option value="quote">Quote Card (বক্তব্য ও উক্তি কার্ড)</option>
-                  <option value="general">General (আধুনিক ব্লু ফ্রেমড কার্ড)</option>
-                </select>
+              <div class="field" style="margin-bottom: 16px;">
+                <label class="field-label" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>ফটোকার্ডের টেমপ্লেট নির্বাচন করুন (৫টি ডিজাইন)</span>
+                  <span id="activeTemplateBadge" style="font-size: 11px; background: rgba(239, 68, 68, 0.1); color: #EF4444; padding: 2px 8px; border-radius: 10px; font-weight: 700;">BREAKING</span>
+                </label>
+                <input type="hidden" id="custTemplate" value="breaking">
+                <div class="tmpl-pill-bar" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+                  <button type="button" class="tmpl-pill" data-tmpl="viral" onclick="selectCustomTemplate('viral')">🌟 Viral</button>
+                  <button type="button" class="tmpl-pill active" data-tmpl="breaking" onclick="selectCustomTemplate('breaking')">🚨 Breaking</button>
+                  <button type="button" class="tmpl-pill" data-tmpl="inqilab_style" onclick="selectCustomTemplate('inqilab_style')">📰 Inqilab Style</button>
+                  <button type="button" class="tmpl-pill" data-tmpl="quote" onclick="selectCustomTemplate('quote')">💬 Quote Card</button>
+                  <button type="button" class="tmpl-pill" data-tmpl="general" onclick="selectCustomTemplate('general')">💎 General</button>
+                </div>
               </div>
 
               <div id="quoteFields" style="display: none; background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px; margin-bottom: 14px; border: 1px dashed var(--border);">
@@ -167,6 +195,17 @@
         const tmpl = document.getElementById('custTemplate').value;
         const qBox = document.getElementById('quoteFields');
         qBox.style.display = (tmpl === 'quote') ? 'block' : 'none';
+      }
+
+      function selectCustomTemplate(tmpl) {
+        document.getElementById('custTemplate').value = tmpl;
+        document.querySelectorAll('.tmpl-pill').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tmpl === tmpl);
+        });
+        const badge = document.getElementById('activeTemplateBadge');
+        if (badge) badge.textContent = tmpl.toUpperCase();
+        toggleQuoteFields();
+        renderLivePreview();
       }
 
       function debouncePreview() {

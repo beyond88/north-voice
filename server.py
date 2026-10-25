@@ -209,7 +209,7 @@ def preview_news_card(payload: Dict):
             os.remove(card_path)
         except Exception:
             pass
-        return {"success": True, "image_uri": uri}
+        return {"success": True, "image_uri": uri, "template": template}
     else:
         raise HTTPException(status_code=400, detail="Could not generate card preview. Valid authentic photo is required.")
 

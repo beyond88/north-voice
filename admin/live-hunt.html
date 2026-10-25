@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="assets/css/style.css">
-    <title>North Voice · লাইভ নিউজ হান্টার ও তাৎক্ষণিক প্রকাশ</title>
+    <title>North Voice · লাইভ নিউজ হান্টার ও ৫টি ফটোকার্ড সিলেকশন</title>
     <script>
       (function () {
         try {
@@ -92,7 +92,16 @@
         font-size: 12.5px;
         color: var(--t-muted);
         line-height: 1.5;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
+      }
+      .candidate-tmpl-row {
+        background: rgba(0,0,0,0.03);
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
       }
       .candidate-footer {
         display: flex;
@@ -100,7 +109,32 @@
         align-items: center;
         border-top: 1px solid var(--border);
         padding-top: 12px;
-        margin-top: 8px;
+      }
+
+      /* 5-Template Pills Bar */
+      .tmpl-pill {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: var(--bg-surface, #fff);
+        color: var(--t-primary, #0f172a);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .tmpl-pill:hover {
+        border-color: #EF4444;
+        color: #EF4444;
+      }
+      .tmpl-pill.active {
+        background: #EF4444;
+        color: #ffffff;
+        border-color: #EF4444;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
       }
 
       /* Preview Modal */
@@ -108,7 +142,7 @@
         display: none;
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.75);
+        background: rgba(0,0,0,0.8);
         z-index: 9999;
         align-items: center;
         justify-content: center;
@@ -117,12 +151,12 @@
       .modal-card {
         background: var(--bg-surface, #ffffff);
         border-radius: 12px;
-        max-width: 650px;
-        width: 90%;
-        max-height: 90vh;
+        max-width: 680px;
+        width: 92%;
+        max-height: 92vh;
         overflow-y: auto;
         padding: 24px;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
       }
     </style>
   </head>
@@ -137,8 +171,8 @@
         <section class="hero">
           <div class="hero-text">
             <span class="eyebrow">৪৩টি জাতীয় ও আঞ্চলিক মাস্টার ফিড স্ক্যানার</span>
-            <h1 class="hero-title">লাইভ নিউজ হান্টার ও <span class="accent">তাৎক্ষণিক প্রকাশ</span></h1>
-            <p class="hero-sub">সারাদেশ ও উত্তরবঙ্গের তাজা সংবাদ মুহূর্তের মধ্যে খুঁজে বের করে ফটোকার্ড প্রিভিউ ও ফেসবুকে সরাসরি পোস্ট করুন।</p>
+            <h1 class="hero-title">লাইভ নিউজ হান্টার ও <span class="accent">৫টি ফটোকার্ড সিলেকশন</span></h1>
+            <p class="hero-sub">সারাদেশ ও উত্তরবঙ্গের তাজা সংবাদ মুহূর্তের মধ্যে খুঁজে ৫টি ডিজাইন টেমপ্লেটের যেকোনোটি পছন্দ করে সরাসরি ফেসবুকে প্রকাশ করুন।</p>
           </div>
           <div class="hero-actions">
             <button class="btn btn--primary" id="btnScanNow" onclick="scanFeeds()">
@@ -201,19 +235,53 @@
       </div>
     </div>
 
-    <!-- PREVIEW MODAL -->
+    <!-- PREVIEW & TEMPLATE SELECTOR MODAL -->
     <div class="modal-backdrop" id="previewModal">
       <div class="modal-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 700;">ফটোকার্ড লাইভ প্রিভিউ</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700;">ফটোকার্ড লাইভ প্রিভিউ ও টেমপ্লেট নির্বাচন</h3>
+            <span style="font-size: 12px; color: var(--t-muted);" id="modalCandidateHeadline">শিরোনাম লোড হচ্ছে...</span>
+          </div>
           <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--t-muted);">✕</button>
         </div>
-        <div id="previewImgContainer" style="text-align: center; background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; min-height: 300px; display: flex; align-items: center; justify-content: center;">
+
+        <!-- 5-Template Selector Bar -->
+        <div style="background: rgba(0,0,0,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+          <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--t-muted);">
+            🎨 পছন্দ অনুযায়ী ৫টি ফটোকার্ড ডিজাইনের যেকোনো একটি সিলেক্ট করুন:
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="modalTemplatePills">
+            <button type="button" class="tmpl-pill" data-tmpl="viral" onclick="switchModalTemplate('viral')">
+              🌟 Viral (ডার্ক স্লেট)
+            </button>
+            <button type="button" class="tmpl-pill" data-tmpl="breaking" onclick="switchModalTemplate('breaking')">
+              🚨 Breaking (সিগনেচার রেড)
+            </button>
+            <button type="button" class="tmpl-pill" data-tmpl="inqilab_style" onclick="switchModalTemplate('inqilab_style')">
+              📰 Inqilab (সম্পাদকীয়)
+            </button>
+            <button type="button" class="tmpl-pill" data-tmpl="quote" onclick="switchModalTemplate('quote')">
+              💬 Quote (উক্তি কার্ড)
+            </button>
+            <button type="button" class="tmpl-pill" data-tmpl="general" onclick="switchModalTemplate('general')">
+              💎 General (মডার্ন ব্লু)
+            </button>
+          </div>
+        </div>
+
+        <div id="previewImgContainer" style="text-align: center; background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; min-height: 380px; display: flex; align-items: center; justify-content: center;">
           <span style="color: #cbd5e1;">রেন্ডার হচ্ছে...</span>
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button class="btn btn--ghost" onclick="closePreviewModal()">বন্ধ করুন</button>
-          <button class="btn btn--primary" id="btnPublishFromPreview">ফেসবুকে পাবলিশ করুন 🚀</button>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <div style="font-size: 12px; color: var(--t-muted);">
+            নির্বাচিত টেমপ্লেট: <strong id="modalSelectedTmplLabel" style="color: #EF4444;">breaking</strong>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn--ghost" onclick="closePreviewModal()">বন্ধ করুন</button>
+            <button class="btn btn--primary" id="btnPublishFromPreview">ফেসবুকে পাবলিশ করুন 🚀</button>
+          </div>
         </div>
       </div>
     </div>
@@ -221,7 +289,7 @@
     <script type="module" src="assets/js/index.js"></script>
     <script>
       let currentCandidates = [];
-      let activeCandidate = null;
+      let activeCandidateIndex = null;
 
       async function scanFeeds() {
         const q = document.getElementById('queryInput').value;
@@ -242,7 +310,10 @@
 
           const res = await fetch(`/api/news/hunt?${params.toString()}`);
           const data = await res.json();
-          currentCandidates = data.candidates || [];
+          currentCandidates = (data.candidates || []).map(c => ({
+            ...c,
+            template: c.recommended_template || 'breaking'
+          }));
 
           loader.style.display = 'none';
 
@@ -263,6 +334,7 @@
         grid.innerHTML = candidates.map((c, idx) => {
           const imgUrl = c.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600';
           const badgeText = c.is_international ? 'আন্তর্জাতিক' : (c.is_viral ? 'ভাইরাল' : (c.upazila ? `${c.upazila}, ${c.district}` : c.district));
+          const currentTmpl = c.template || 'breaking';
 
           return `
             <div class="candidate-card">
@@ -276,10 +348,23 @@
                   <div class="candidate-title">${c.title}</div>
                   <div class="candidate-summary">${c.summary}</div>
                 </div>
+
+                <!-- 5-Template Select Dropdown on Card -->
+                <div class="candidate-tmpl-row">
+                  <span style="font-size: 11.5px; font-weight: 700; color: var(--t-muted);">ফটোকার্ড ডিজাইন:</span>
+                  <select class="input" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; width: auto;" onchange="updateCandidateTemplate(${idx}, this.value)">
+                    <option value="viral" ${currentTmpl === 'viral' ? 'selected' : ''}>🌟 Viral (স্লেট ব্লু)</option>
+                    <option value="breaking" ${currentTmpl === 'breaking' ? 'selected' : ''}>🚨 Breaking (ক্রিমসন)</option>
+                    <option value="inqilab_style" ${currentTmpl === 'inqilab_style' ? 'selected' : ''}>📰 Inqilab (সম্পাদকীয়)</option>
+                    <option value="quote" ${currentTmpl === 'quote' ? 'selected' : ''}>💬 Quote (উক্তি)</option>
+                    <option value="general" ${currentTmpl === 'general' ? 'selected' : ''}>💎 General (মডার্ন ব্লু)</option>
+                  </select>
+                </div>
+
                 <div class="candidate-footer">
                   <span style="font-size: 12px; color: var(--t-muted); font-weight: 600;">সূত্র: ${c.source}</span>
                   <div style="display: flex; gap: 6px;">
-                    <button class="btn btn--sm btn--ghost" onclick="openPreview(${idx})">প্রিভিউ</button>
+                    <button class="btn btn--sm btn--ghost" onclick="openPreview(${idx})">প্রিভিউ ও টেমপ্লেট</button>
                     <button class="btn btn--sm btn--primary" onclick="instantPublish(${idx})">পোস্ট করুন 🚀</button>
                   </div>
                 </div>
@@ -289,24 +374,51 @@
         }).join('');
       }
 
-      window.openPreview = async function(idx) {
-        activeCandidate = currentCandidates[idx];
-        const modal = document.getElementById('previewModal');
-        const container = document.getElementById('previewImgContainer');
-        modal.classList.add('is-open');
-        container.innerHTML = '<span style="color: #cbd5e1;">ফটোকার্ড রেন্ডার হচ্ছে, কয়েক সেকেন্ড অপেক্ষা করুন...</span>';
+      window.updateCandidateTemplate = function(idx, newTmpl) {
+        if (currentCandidates[idx]) {
+          currentCandidates[idx].template = newTmpl;
+        }
+      };
+
+      window.openPreview = function(idx) {
+        activeCandidateIndex = idx;
+        const candidate = currentCandidates[idx];
+        document.getElementById('modalCandidateHeadline').textContent = candidate.title;
+        document.getElementById('previewModal').classList.add('is-open');
+
+        // Select the active template
+        switchModalTemplate(candidate.template || 'breaking');
 
         document.getElementById('btnPublishFromPreview').onclick = () => instantPublish(idx);
+      };
+
+      window.switchModalTemplate = async function(tmpl) {
+        if (activeCandidateIndex === null) return;
+        const candidate = currentCandidates[activeCandidateIndex];
+        candidate.template = tmpl;
+
+        // Update pills UI
+        document.querySelectorAll('#modalTemplatePills .tmpl-pill').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tmpl === tmpl);
+        });
+        document.getElementById('modalSelectedTmplLabel').textContent = tmpl.toUpperCase();
+
+        // Render live preview for this chosen template
+        const container = document.getElementById('previewImgContainer');
+        container.innerHTML = `<span style="color: #cbd5e1;">'${tmpl}' টেমপ্লেট দিয়ে ফটোকার্ড রেন্ডার হচ্ছে...</span>`;
 
         try {
           const res = await fetch('/api/news/preview', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(activeCandidate)
+            body: JSON.stringify({
+              ...candidate,
+              template: tmpl
+            })
           });
           const data = await res.json();
           if (data.success && data.image_uri) {
-            container.innerHTML = `<img src="${data.image_uri}" style="max-height: 500px; width: auto; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);" alt="Card Preview">`;
+            container.innerHTML = `<img src="${data.image_uri}" style="max-height: 480px; width: auto; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);" alt="Card Preview">`;
           } else {
             container.innerHTML = `<span style="color: #EF4444;">প্রিভিউ ব্যর্থ হয়েছে: ${data.detail || 'ত্রুটি'}</span>`;
           }
@@ -321,7 +433,9 @@
 
       window.instantPublish = async function(idx) {
         const item = currentCandidates[idx];
-        if (!confirm(`আপনি কি নিশ্চিত যে নিচের সংবাদটি ফেসবুকে প্রকাশ করতে চান?\n\n"${item.title}"`)) {
+        const chosenTmpl = item.template || 'breaking';
+
+        if (!confirm(`আপনি কি নিশ্চিত যে নিচের সংবাদটি '${chosenTmpl.toUpperCase()}' টেমপ্লেট দিয়ে ফেসবুকে প্রকাশ করতে চান?\n\n"${item.title}"`)) {
           return;
         }
 
@@ -329,7 +443,10 @@
           const res = await fetch('/api/news/publish', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item)
+            body: JSON.stringify({
+              ...item,
+              template: chosenTmpl
+            })
           });
           const data = await res.json();
           if (data.success) {
