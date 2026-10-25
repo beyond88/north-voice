@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="assets/css/style.css">
-    <title>North Voice · লাইভ নিউজ হান্টার ও ৫টি ফটোকার্ড সিলেকশন</title>
+    <title>North Voice · Live News Hunter & 5 Multi-Template Engine</title>
     <script>
       (function () {
         try {
@@ -37,15 +37,15 @@
         transition: transform 0.2s, box-shadow 0.2s;
       }
       .candidate-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
       }
       .candidate-img-wrap {
         width: 100%;
         height: 200px;
-        background: #1e293b;
-        position: relative;
         overflow: hidden;
+        position: relative;
+        background: #0f172a;
       }
       .candidate-img {
         width: 100%;
@@ -160,7 +160,7 @@
       }
     </style>
   </head>
-  <body data-active="news-hunter" data-crumbs="সংবাদ ব্যবস্থাপনা | লাইভ নিউজ হান্টার">
+  <body data-active="news-hunter" data-crumbs="Newsroom | Live News Hunter">
     <div class="shell">
       <div data-shell-sidebar></div>
       <div class="main">
@@ -170,14 +170,14 @@
         <!-- HERO -->
         <section class="hero">
           <div class="hero-text">
-            <span class="eyebrow">৪৩টি জাতীয় ও আঞ্চলিক মাস্টার ফিড স্ক্যানার</span>
-            <h1 class="hero-title">লাইভ নিউজ হান্টার ও <span class="accent">৫টি ফটোকার্ড সিলেকশন</span></h1>
-            <p class="hero-sub">সারাদেশ ও উত্তরবঙ্গের তাজা সংবাদ মুহূর্তের মধ্যে খুঁজে ৫টি ডিজাইন টেমপ্লেটের যেকোনোটি পছন্দ করে সরাসরি ফেসবুকে প্রকাশ করুন।</p>
+            <span class="eyebrow">43 National & Regional Master Feeds Scanner</span>
+            <h1 class="hero-title">Live News Hunter & <span class="accent">5-Template Studio</span></h1>
+            <p class="hero-sub">Scan breaking news from all 16 North Bengal districts and national feeds, select from 5 photocard designs, and publish directly to Facebook.</p>
           </div>
           <div class="hero-actions">
             <button class="btn btn--primary" id="btnScanNow" onclick="scanFeeds()">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              তাজা সংবাদ স্ক্যান করুন
+              <span>Scan Live News Now</span>
             </button>
           </div>
         </section>
@@ -186,44 +186,44 @@
         <div class="card" style="padding: 20px;">
           <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
             <div style="flex: 1; min-width: 250px;">
-              <input type="text" id="queryInput" class="input" placeholder="কি-ওয়ার্ড দিয়ে খুঁজুন (যেমন: তিস্তা, দুর্ঘটনা, নির্বাচন, ভাইরাল)..." onkeydown="if(event.key==='Enter') scanFeeds()">
+              <input type="text" id="queryInput" class="input" placeholder="Search by keywords (e.g. Teesta, election, accident, viral)..." onkeydown="if(event.key==='Enter') scanFeeds()">
             </div>
-            <div style="min-width: 160px;">
+            <div style="min-width: 170px;">
               <select id="districtFilter" class="input">
-                <option value="সব জেলা">সব জেলা / অঞ্চল</option>
-                <option value="আন্তর্জাতিক">আন্তর্জাতিক (Global)</option>
-                <option value="সারা দেশ">সারা দেশ (Viral BD)</option>
-                <option value="বগুড়া">বগুড়া</option>
-                <option value="রংপুর">রংপুর</option>
-                <option value="দিনাজপুর">দিনাজপুর</option>
-                <option value="সিরাজগঞ্জ">সিরাজগঞ্জ</option>
-                <option value="পাবনা">পাবনা</option>
-                <option value="নওগাঁ">নওগাঁ</option>
-                <option value="নাটোর">নাটোর</option>
-                <option value="কুড়িগ্রাম">কুড়িগ্রাম</option>
-                <option value="গাইবান্ধা">গাইবান্ধা</option>
-                <option value="নীলফামারী">নীলফামারী</option>
-                <option value="পঞ্চগড়">পঞ্চগড়</option>
-                <option value="ঠাকুরগাঁও">ঠাকুরগাঁও</option>
-                <option value="লালমনিরহাট">লালমনিরহাট</option>
-                <option value="রাজশাহী">রাজশাহী</option>
-                <option value="জয়পুরহাট">জয়পুরহাট</option>
-                <option value="চাঁপাইনবাবগঞ্জ">চাঁপাইনবাবগঞ্জ</option>
+                <option value="সব জেলা">All Districts / Regions</option>
+                <option value="আন্তর্জাতিক">International (Global)</option>
+                <option value="সারা দেশ">All Bangladesh (Viral BD)</option>
+                <option value="বগুড়া">Bogura</option>
+                <option value="রংপুর">Rangpur</option>
+                <option value="দিনাজপুর">Dinajpur</option>
+                <option value="সিরাজগঞ্জ">Sirajganj</option>
+                <option value="পাবনা">Pabna</option>
+                <option value="নওগাঁ">Naogaon</option>
+                <option value="নাটোর">Natore</option>
+                <option value="কুড়িগ্রাম">Kurigram</option>
+                <option value="গাইবান্ধা">Gaibandha</option>
+                <option value="নীলফামারী">Nilphamari</option>
+                <option value="পঞ্চগড়">Panchagarh</option>
+                <option value="ঠাকুরগাঁও">Thakurgaon</option>
+                <option value="লালমনিরহাট">Lalmonirhat</option>
+                <option value="রাজশাহী">Rajshahi</option>
+                <option value="জয়পুরহাট">Joypurhat</option>
+                <option value="চাঁপাইনবাবগঞ্জ">Chapai Nawabganj</option>
               </select>
             </div>
             <label class="check" style="margin-left: 6px;">
               <input type="checkbox" id="viralToggle">
               <span class="box"></span>
-              শুধুমাত্র ভাইরাল ও ট্রেন্ডিং
+              Viral & Trending Only
             </label>
-            <button class="btn btn--primary" onclick="scanFeeds()">সার্চ করুন</button>
+            <button class="btn btn--primary" id="btnFilterSubmit" onclick="scanFeeds()">Filter</button>
           </div>
         </div>
 
         <!-- CANDIDATES RESULT GRID -->
         <div id="loadingStatus" style="display: none; text-align: center; padding: 50px;">
-          <div style="font-size: 16px; font-weight: 700;">📡 দেশের ৪৩টি মাস্টার নিউজ ফিড স্ক্যান করা হচ্ছে...</div>
-          <div style="font-size: 13px; color: var(--t-muted); margin-top: 8px;">অনুগ্রহ করে কয়েক সেকেন্ড অপেক্ষা করুন।</div>
+          <div style="font-size: 16px; font-weight: 700;">📡 Scanning 43 master news feeds across Bangladesh...</div>
+          <div style="font-size: 13px; color: var(--t-muted); margin-top: 8px;">Please wait a few seconds while fresh stories are fetched.</div>
         </div>
 
         <div class="candidate-grid" id="candidateGrid">
@@ -240,8 +240,8 @@
       <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <div>
-            <h3 style="margin: 0; font-size: 17px; font-weight: 700;">ফটোকার্ড লাইভ প্রিভিউ ও টেমপ্লেট নির্বাচন</h3>
-            <span style="font-size: 12px; color: var(--t-muted);" id="modalCandidateHeadline">শিরোনাম লোড হচ্ছে...</span>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700;">Photocard Preview & Multi-Template Studio</h3>
+            <span style="font-size: 12px; color: var(--t-muted);" id="modalCandidateHeadline">Loading story headline...</span>
           </div>
           <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--t-muted);">✕</button>
         </div>
@@ -249,38 +249,38 @@
         <!-- 5-Template Selector Bar -->
         <div style="background: rgba(0,0,0,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
           <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--t-muted);">
-            🎨 পছন্দ অনুযায়ী ৫টি ফটোকার্ড ডিজাইনের যেকোনো একটি সিলেক্ট করুন:
+            🎨 Select any of the 5 Photocard Designs for this story:
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px;" id="modalTemplatePills">
             <button type="button" class="tmpl-pill" data-tmpl="viral" onclick="switchModalTemplate('viral')">
-              🌟 Viral (ডার্ক স্লেট)
+              🌟 Viral (Slate Blue)
             </button>
             <button type="button" class="tmpl-pill" data-tmpl="breaking" onclick="switchModalTemplate('breaking')">
-              🚨 Breaking (সিগনেচার রেড)
+              🚨 Breaking (Crimson)
             </button>
             <button type="button" class="tmpl-pill" data-tmpl="inqilab_style" onclick="switchModalTemplate('inqilab_style')">
-              📰 Inqilab (সম্পাদকীয়)
+              📰 Inqilab (Editorial)
             </button>
             <button type="button" class="tmpl-pill" data-tmpl="quote" onclick="switchModalTemplate('quote')">
-              💬 Quote (উক্তি কার্ড)
+              💬 Quote Card
             </button>
             <button type="button" class="tmpl-pill" data-tmpl="general" onclick="switchModalTemplate('general')">
-              💎 General (মডার্ন ব্লু)
+              💎 General (Modern Blue)
             </button>
           </div>
         </div>
 
         <div id="previewImgContainer" style="text-align: center; background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; min-height: 380px; display: flex; align-items: center; justify-content: center;">
-          <span style="color: #cbd5e1;">রেন্ডার হচ্ছে...</span>
+          <span style="color: #cbd5e1;">Rendering photocard...</span>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
           <div style="font-size: 12px; color: var(--t-muted);">
-            নির্বাচিত টেমপ্লেট: <strong id="modalSelectedTmplLabel" style="color: #EF4444;">breaking</strong>
+            Selected Template: <strong id="modalSelectedTmplLabel" style="color: #EF4444;">BREAKING</strong>
           </div>
           <div style="display: flex; gap: 10px;">
-            <button class="btn btn--ghost" onclick="closePreviewModal()">বন্ধ করুন</button>
-            <button class="btn btn--primary" id="btnPublishFromPreview">ফেসবুকে পাবলিশ করুন 🚀</button>
+            <button class="btn btn--ghost" onclick="closePreviewModal()">Close</button>
+            <button class="btn btn--primary" id="btnPublishFromPreview">Publish to Facebook 🚀</button>
           </div>
         </div>
       </div>
@@ -292,6 +292,9 @@
       let activeCandidateIndex = null;
 
       async function scanFeeds() {
+        const btn = document.getElementById('btnScanNow');
+        window.setBtnLoading(btn, true, 'Scanning Feeds...');
+
         const q = document.getElementById('queryInput').value;
         const dist = document.getElementById('districtFilter').value;
         const viral = document.getElementById('viralToggle').checked;
@@ -318,14 +321,16 @@
           loader.style.display = 'none';
 
           if (currentCandidates.length === 0) {
-            grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 50px; color: var(--t-muted);">কোনো সংবাদ পাওয়া যায়নি। অনুগ্রহ করে অন্য কি-ওয়ার্ড বা জেলা দিয়ে খুঁজুন।</div>';
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 50px; color: var(--t-muted);">No news found matching your query or filter. Try a different keyword or district.</div>';
             return;
           }
 
           renderCandidates(currentCandidates);
         } catch (e) {
           loader.style.display = 'none';
-          alert('সংবাদ স্ক্যান ব্যর্থ হয়েছে: ' + e);
+          alert('News scan failed: ' + e);
+        } finally {
+          window.setBtnLoading(btn, false);
         }
       }
 
@@ -333,7 +338,7 @@
         const grid = document.getElementById('candidateGrid');
         grid.innerHTML = candidates.map((c, idx) => {
           const imgUrl = c.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600';
-          const badgeText = c.is_international ? 'আন্তর্জাতিক' : (c.is_viral ? 'ভাইরাল' : (c.upazila ? `${c.upazila}, ${c.district}` : c.district));
+          const badgeText = c.is_international ? 'International' : (c.is_viral ? 'Viral' : (c.upazila ? `${c.upazila}, ${c.district}` : c.district));
           const currentTmpl = c.template || 'breaking';
 
           return `
@@ -351,21 +356,21 @@
 
                 <!-- 5-Template Select Dropdown on Card -->
                 <div class="candidate-tmpl-row">
-                  <span style="font-size: 11.5px; font-weight: 700; color: var(--t-muted);">ফটোকার্ড ডিজাইন:</span>
+                  <span style="font-size: 11.5px; font-weight: 700; color: var(--t-muted);">Design Template:</span>
                   <select class="input" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; width: auto;" onchange="updateCandidateTemplate(${idx}, this.value)">
-                    <option value="viral" ${currentTmpl === 'viral' ? 'selected' : ''}>🌟 Viral (স্লেট ব্লু)</option>
-                    <option value="breaking" ${currentTmpl === 'breaking' ? 'selected' : ''}>🚨 Breaking (ক্রিমসন)</option>
-                    <option value="inqilab_style" ${currentTmpl === 'inqilab_style' ? 'selected' : ''}>📰 Inqilab (সম্পাদকীয়)</option>
-                    <option value="quote" ${currentTmpl === 'quote' ? 'selected' : ''}>💬 Quote (উক্তি)</option>
-                    <option value="general" ${currentTmpl === 'general' ? 'selected' : ''}>💎 General (মডার্ন ব্লু)</option>
+                    <option value="viral" ${currentTmpl === 'viral' ? 'selected' : ''}>🌟 Viral (Slate)</option>
+                    <option value="breaking" ${currentTmpl === 'breaking' ? 'selected' : ''}>🚨 Breaking (Crimson)</option>
+                    <option value="inqilab_style" ${currentTmpl === 'inqilab_style' ? 'selected' : ''}>📰 Inqilab (Editorial)</option>
+                    <option value="quote" ${currentTmpl === 'quote' ? 'selected' : ''}>💬 Quote Card</option>
+                    <option value="general" ${currentTmpl === 'general' ? 'selected' : ''}>💎 General (Modern Blue)</option>
                   </select>
                 </div>
 
                 <div class="candidate-footer">
-                  <span style="font-size: 12px; color: var(--t-muted); font-weight: 600;">সূত্র: ${c.source}</span>
+                  <span style="font-size: 12px; color: var(--t-muted); font-weight: 600;">Source: ${c.source}</span>
                   <div style="display: flex; gap: 6px;">
-                    <button class="btn btn--sm btn--ghost" onclick="openPreview(${idx})">প্রিভিউ ও টেমপ্লেট</button>
-                    <button class="btn btn--sm btn--primary" onclick="instantPublish(${idx})">পোস্ট করুন 🚀</button>
+                    <button class="btn btn--sm btn--ghost" onclick="openPreview(${idx}, this)">Preview & Design</button>
+                    <button class="btn btn--sm btn--primary" onclick="instantPublish(${idx}, this)">Publish 🚀</button>
                   </div>
                 </div>
               </div>
@@ -380,16 +385,14 @@
         }
       };
 
-      window.openPreview = function(idx) {
+      window.openPreview = function(idx, btn) {
         activeCandidateIndex = idx;
         const candidate = currentCandidates[idx];
         document.getElementById('modalCandidateHeadline').textContent = candidate.title;
         document.getElementById('previewModal').classList.add('is-open');
 
-        // Select the active template
         switchModalTemplate(candidate.template || 'breaking');
-
-        document.getElementById('btnPublishFromPreview').onclick = () => instantPublish(idx);
+        document.getElementById('btnPublishFromPreview').onclick = () => instantPublish(idx, document.getElementById('btnPublishFromPreview'));
       };
 
       window.switchModalTemplate = async function(tmpl) {
@@ -397,15 +400,13 @@
         const candidate = currentCandidates[activeCandidateIndex];
         candidate.template = tmpl;
 
-        // Update pills UI
         document.querySelectorAll('#modalTemplatePills .tmpl-pill').forEach(btn => {
           btn.classList.toggle('active', btn.dataset.tmpl === tmpl);
         });
         document.getElementById('modalSelectedTmplLabel').textContent = tmpl.toUpperCase();
 
-        // Render live preview for this chosen template
         const container = document.getElementById('previewImgContainer');
-        container.innerHTML = `<span style="color: #cbd5e1;">'${tmpl}' টেমপ্লেট দিয়ে ফটোকার্ড রেন্ডার হচ্ছে...</span>`;
+        container.innerHTML = `<span style="color: #cbd5e1;"><span class="btn-spinner"></span> Rendering '${tmpl}' photocard...</span>`;
 
         try {
           const res = await fetch('/api/news/preview', {
@@ -420,10 +421,10 @@
           if (data.success && data.image_uri) {
             container.innerHTML = `<img src="${data.image_uri}" style="max-height: 480px; width: auto; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);" alt="Card Preview">`;
           } else {
-            container.innerHTML = `<span style="color: #EF4444;">প্রিভিউ ব্যর্থ হয়েছে: ${data.detail || 'ত্রুটি'}</span>`;
+            container.innerHTML = `<span style="color: #EF4444;">Preview failed: ${data.detail || 'Error'}</span>`;
           }
         } catch (e) {
-          container.innerHTML = `<span style="color: #EF4444;">প্রিভিউ এরর: ${e}</span>`;
+          container.innerHTML = `<span style="color: #EF4444;">Preview error: ${e}</span>`;
         }
       };
 
@@ -431,13 +432,15 @@
         document.getElementById('previewModal').classList.remove('is-open');
       };
 
-      window.instantPublish = async function(idx) {
+      window.instantPublish = async function(idx, btn) {
         const item = currentCandidates[idx];
         const chosenTmpl = item.template || 'breaking';
 
-        if (!confirm(`আপনি কি নিশ্চিত যে নিচের সংবাদটি '${chosenTmpl.toUpperCase()}' টেমপ্লেট দিয়ে ফেসবুকে প্রকাশ করতে চান?\n\n"${item.title}"`)) {
+        if (!confirm(`Are you sure you want to publish this story to your Facebook Page with '${chosenTmpl.toUpperCase()}' template?\n\n"${item.title}"`)) {
           return;
         }
+
+        if (btn) window.setBtnLoading(btn, true, 'Publishing...');
 
         try {
           const res = await fetch('/api/news/publish', {
@@ -450,13 +453,15 @@
           });
           const data = await res.json();
           if (data.success) {
-            alert(`✅ অভিনন্দন! সংবাদটি সফলভাবে ফেসবুকে প্রকাশিত হয়েছে!\n\nপোস্ট আইডি: ${data.fb_post_id}\nব্যবহৃত টেমপ্লেট: ${data.template}\nস্প্যাম স্কোর: ${data.spam_score}/১০০ (নিরাপদ)`);
+            alert(`✅ Published successfully to Facebook Page!\n\nPost ID: ${data.fb_post_id}\nTemplate: ${data.template}\nSpam Score: ${data.spam_score}/100 (Safe)`);
             closePreviewModal();
           } else {
-            alert('পোস্ট প্রকাশ ব্যর্থ হয়েছে: ' + (data.detail || 'ত্রুটি'));
+            alert('Publish failed: ' + (data.detail || 'Error'));
           }
         } catch (err) {
-          alert('নেটওয়ার্ক ত্রুটি: ' + err);
+          alert('Network error: ' + err);
+        } finally {
+          if (btn) window.setBtnLoading(btn, false);
         }
       };
 

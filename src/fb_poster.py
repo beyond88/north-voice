@@ -137,3 +137,34 @@ class FacebookPoster:
         except Exception as e:
             logger.error(f"Failed to delete post {clean_post_id} from Facebook: {e}")
             return False
+
+    def update_post_caption(self, post_id: str, new_caption: str) -> bool:
+        """
+        Updates an existing published post's caption/message on Facebook Page Feed.
+        This modifies the existing old post in-place without creating a duplicate.
+        """
+        if self.dry_run:
+            logger.info(f"[DRY-RUN UPDATE] Post ID {post_id} -> New Caption: {new_caption[:40]}...")
+            return True
+
+        if not post_id or post_id in ("dry_run", "mock"):
+            return True
+
+        clean_post_id = post_id.split("|tmpl:")[0].strip()
+        url = f"https://graph.facebook.com/v20.0/{clean_post_id}"
+        payload = {
+            "message": new_caption,
+            "access_token": self.access_token
+        }
+        try:
+            res = requests.post(url, data=payload, timeout=20)
+            data = res.json()
+            if res.status_code == 200 and data.get("success", False):
+                logger.info(f"✅ Successfully updated post {clean_post_id} on Facebook Page Feed.")
+                return True
+            else:
+                logger.warning(f"Could not update post {clean_post_id} on Facebook: {data}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to update post {clean_post_id} on Facebook: {e}")
+            return False

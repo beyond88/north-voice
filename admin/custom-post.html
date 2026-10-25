@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="assets/css/style.css">
-    <title>North Voice · কাস্টম পোস্ট স্টুডিও</title>
+    <title>North Voice · Custom Post Studio & Composer</title>
     <script>
       (function () {
         try {
@@ -66,7 +66,7 @@
       }
     </style>
   </head>
-  <body data-active="custom-post" data-crumbs="সংবাদ ব্যবস্থাপনা | কাস্টম পোস্ট স্টুডিও">
+  <body data-active="custom-post" data-crumbs="Newsroom | Custom Post Studio">
     <div class="shell">
       <div data-shell-sidebar></div>
       <div class="main">
@@ -76,9 +76,9 @@
         <!-- HERO -->
         <section class="hero">
           <div class="hero-text">
-            <span class="eyebrow">ম্যানুয়াল সংবাদ ও ৫টি টেমপ্লেট স্টুডিও</span>
-            <h1 class="hero-title">কাস্টম পোস্ট <span class="accent">স্টুডিও</span></h1>
-            <p class="hero-sub">নিজস্ব সংবাদ, ফটোকার্ড তৈরি ও তাৎক্ষণিক ফেসবুক পেজে প্রকাশের পূর্ণাঙ্গ ওয়ার্কস্পেস।</p>
+            <span class="eyebrow">Manual Editorial Studio & 5 Design Engines</span>
+            <h1 class="hero-title">Custom Post <span class="accent">Studio</span></h1>
+            <p class="hero-sub">Compose breaking stories, design customized 1080x1350 photocards across 5 templates, and publish to Facebook.</p>
           </div>
         </section>
 
@@ -86,16 +86,16 @@
         <div class="studio-grid">
           <!-- Form -->
           <div class="card" style="padding: 24px;">
-            <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 16px 0;">সংবাদের তথ্য ও ডিজাইন কনফিগারেশন</h3>
+            <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 16px 0;">Story Content & Design Configuration</h3>
             <form onsubmit="event.preventDefault(); publishCustom();">
               <div class="field" style="margin-bottom: 14px;">
-                <label class="field-label">সংবাদের মূল শিরোনাম (Headline)</label>
-                <input type="text" id="custTitle" class="input" placeholder="আকর্ষণীয় শিরোনাম লিখুন..." required oninput="debouncePreview()">
+                <label class="field-label">Headline (Bengali)</label>
+                <input type="text" id="custTitle" class="input" placeholder="Enter compelling headline in Bengali..." required oninput="debouncePreview()">
               </div>
 
               <div class="field" style="margin-bottom: 16px;">
                 <label class="field-label" style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>ফটোকার্ডের টেমপ্লেট নির্বাচন করুন (৫টি ডিজাইন)</span>
+                  <span>Select Photocard Design Template (5 Styles)</span>
                   <span id="activeTemplateBadge" style="font-size: 11px; background: rgba(239, 68, 68, 0.1); color: #EF4444; padding: 2px 8px; border-radius: 10px; font-weight: 700;">BREAKING</span>
                 </label>
                 <input type="hidden" id="custTemplate" value="breaking">
@@ -110,61 +110,61 @@
 
               <div id="quoteFields" style="display: none; background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px; margin-bottom: 14px; border: 1px dashed var(--border);">
                 <div class="field" style="margin-bottom: 10px;">
-                  <label class="field-label">বক্তার নাম (Speaker Name)</label>
-                  <input type="text" id="custSpeakerName" class="input" placeholder="উদা: অধ্যাপক ড. মুহাম্মদ ইউনূস" oninput="debouncePreview()">
+                  <label class="field-label">Speaker Name (বক্তার নাম)</label>
+                  <input type="text" id="custSpeakerName" class="input" placeholder="e.g. ড. মুহাম্মদ ইউনূস" oninput="debouncePreview()">
                 </div>
                 <div class="field">
-                  <label class="field-label">বক্তার পদবি (Speaker Title)</label>
-                  <input type="text" id="custSpeakerTitle" class="input" placeholder="উদা: প্রধান উপদেষ্টা, অন্তর্বর্তীকালীন সরকার" oninput="debouncePreview()">
+                  <label class="field-label">Speaker Title / Designation (পদবি)</label>
+                  <input type="text" id="custSpeakerTitle" class="input" placeholder="e.g. প্রধান উপদেষ্টা, অন্তর্বর্তী সরকার" oninput="debouncePreview()">
                 </div>
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
                 <div class="field">
-                  <label class="field-label">জেলা / এলাকা</label>
+                  <label class="field-label">District / Region Badge</label>
                   <select id="custDistrict" class="input" onchange="debouncePreview()">
-                    <option value="সারা দেশ">সারা দেশ</option>
-                    <option value="আন্তর্জাতিক">আন্তর্জাতিক</option>
-                    <option value="বগুড়া">বগুড়া</option>
-                    <option value="রংপুর">রংপুর</option>
-                    <option value="দিনাজপুর">দিনাজপুর</option>
-                    <option value="সিরাজগঞ্জ">সিরাজগঞ্জ</option>
-                    <option value="পাবনা">পাবনা</option>
-                    <option value="নওগাঁ">নওগাঁ</option>
-                    <option value="নাটোর">নাটোর</option>
-                    <option value="কুড়িগ্রাম">কুড়িগ্রাম</option>
-                    <option value="গাইবান্ধা">গাইবান্ধা</option>
-                    <option value="নীলফামারী">নীলফামারী</option>
-                    <option value="পঞ্চগড়">পঞ্চগড়</option>
-                    <option value="ঠাকুরগাঁও">ঠাকুরগাঁও</option>
-                    <option value="লালমনিরহাট">লালমনিরহাট</option>
-                    <option value="রাজশাহী">রাজশাহী</option>
-                    <option value="জয়পুরহাট">জয়পুরহাট</option>
-                    <option value="চাঁপাইনবাবগঞ্জ">চাঁপাইনবাবগঞ্জ</option>
+                    <option value="সারা দেশ">All Country (সারা দেশ)</option>
+                    <option value="আন্তর্জাতিক">International (আন্তর্জাতিক)</option>
+                    <option value="বগুড়া">Bogura (বগুড়া)</option>
+                    <option value="রংপুর">Rangpur (রংপুর)</option>
+                    <option value="দিনাজপুর">Dinajpur (দিনাজপুর)</option>
+                    <option value="সিরাজগঞ্জ">Sirajganj (সিরাজগঞ্জ)</option>
+                    <option value="পাবনা">Pabna (পাবনা)</option>
+                    <option value="নওগাঁ">Naogaon (নওগাঁ)</option>
+                    <option value="নাটোর">Natore (নাটোর)</option>
+                    <option value="কুড়িগ্রাম">Kurigram (কুড়িগ্রাম)</option>
+                    <option value="গাইবান্ধা">Gaibandha (গাইবান্ধা)</option>
+                    <option value="নীলফামারী">Nilphamari (নীলফামারী)</option>
+                    <option value="পঞ্চগড়">Panchagarh (পঞ্চগড়)</option>
+                    <option value="ঠাকুরগাঁও">Thakurgaon (ঠাকুরগাঁও)</option>
+                    <option value="লালমনিরহাট">Lalmonirhat (লালমনিরহাট)</option>
+                    <option value="রাজশাহী">Rajshahi (রাজশাহী)</option>
+                    <option value="জয়পুরহাট">Joypurhat (জয়পুরহাট)</option>
+                    <option value="চাঁপাইনবাবগঞ্জ">Chapai Nawabganj</option>
                   </select>
                 </div>
                 <div class="field">
-                  <label class="field-label">তথ্যসূত্র (Source)</label>
+                  <label class="field-label">Source Citation</label>
                   <input type="text" id="custSource" class="input" value="নিজস্ব প্রতিবেদক" oninput="debouncePreview()">
                 </div>
               </div>
 
               <div class="field" style="margin-bottom: 14px;">
-                <label class="field-label">সংবাদের আসল ছবির ইউআরএল (Image URL)</label>
+                <label class="field-label">Authentic Photo URL</label>
                 <input type="url" id="custImage" class="input" placeholder="https://example.com/photo.jpg" value="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000" required onchange="debouncePreview()">
               </div>
 
               <div class="field" style="margin-bottom: 20px;">
-                <label class="field-label">মূল সংবাদ ও বিবরণ (Story Body / Caption)</label>
-                <textarea id="custSummary" class="input" rows="4" placeholder="সংবাদের বিস্তারিত বিবরণ লিখুন..." required></textarea>
+                <label class="field-label">Story Body & Facebook Caption (Bengali)</label>
+                <textarea id="custSummary" class="input" rows="4" placeholder="Enter detailed news body / caption in Bengali..." required></textarea>
               </div>
 
               <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn--ghost" style="flex: 1;" onclick="renderLivePreview()">
-                  কার্ড প্রিভিউ আপডেট
+                <button type="button" class="btn btn--ghost" id="btnPreviewUpdate" style="flex: 1;" onclick="renderLivePreview()">
+                  <span>Update Preview</span>
                 </button>
                 <button type="submit" class="btn btn--primary" id="btnPublishCustom" style="flex: 1.2;">
-                  ফেসবুকে পাবলিশ করুন 🚀
+                  <span>Publish to Facebook 🚀</span>
                 </button>
               </div>
             </form>
@@ -173,11 +173,11 @@
           <!-- Preview -->
           <div class="card" style="padding: 24px; display: flex; flex-direction: column;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <h3 style="font-size: 16px; font-weight: 700; margin: 0;">রিয়েল-টাইম ফটোকার্ড প্রিভিউ</h3>
-              <span id="previewStatus" style="font-size: 12px; color: var(--t-muted);">রেডি</span>
+              <h3 style="font-size: 16px; font-weight: 700; margin: 0;">Real-Time Photocard Preview</h3>
+              <span id="previewStatus" style="font-size: 12px; color: var(--t-muted);">Ready</span>
             </div>
             <div class="preview-box" id="previewContainer">
-              <span style="color: #94a3b8; font-size: 14px;">ফর্ম পূরণ করে 'কার্ড প্রিভিউ আপডেট' বাটনে ক্লিক করুন।</span>
+              <span style="color: #94a3b8; font-size: 14px;">Fill the form and click 'Update Preview' to render card.</span>
             </div>
           </div>
         </div>
@@ -220,7 +220,10 @@
 
         const container = document.getElementById('previewContainer');
         const status = document.getElementById('previewStatus');
-        status.textContent = 'রেন্ডারিং...';
+        const btn = document.getElementById('btnPreviewUpdate');
+
+        status.textContent = 'Rendering...';
+        if (btn) window.setBtnLoading(btn, true, 'Rendering...');
 
         const payload = {
           title: title,
@@ -242,19 +245,20 @@
           const data = await res.json();
           if (data.success && data.image_uri) {
             container.innerHTML = `<img src="${data.image_uri}" style="max-height: 460px; max-width: 100%; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);" alt="Card Preview">`;
-            status.textContent = 'সফল প্রিভিউ';
+            status.textContent = 'Preview Ready';
           } else {
-            status.textContent = 'প্রিভিউ ত্রুটি';
+            status.textContent = 'Preview Error';
           }
         } catch (e) {
-          status.textContent = 'এরর';
+          status.textContent = 'Error';
+        } finally {
+          if (btn) window.setBtnLoading(btn, false);
         }
       }
 
       async function publishCustom() {
         const btn = document.getElementById('btnPublishCustom');
-        btn.disabled = true;
-        btn.textContent = 'পোস্ট হচ্ছে...';
+        window.setBtnLoading(btn, true, 'Publishing to Facebook...');
 
         const payload = {
           title: document.getElementById('custTitle').value.trim(),
@@ -275,16 +279,15 @@
           });
           const data = await res.json();
           if (data.success) {
-            alert(`✅ পোস্ট সফলভাবে ফেসবুকে প্রকাশিত হয়েছে!\n\nপোস্ট আইডি: ${data.fb_post_id}\nব্যবহৃত টেমপ্লেট: ${data.template}`);
+            alert(`✅ Post successfully published to Facebook Page!\n\nPost ID: ${data.fb_post_id}\nTemplate: ${data.template}`);
             window.location.href = 'posts.html';
           } else {
-            alert('পোস্ট প্রকাশ ব্যর্থ হয়েছে: ' + (data.detail || 'ত্রুটি'));
+            alert('Publishing failed: ' + (data.detail || 'Error'));
           }
         } catch (err) {
-          alert('নেটওয়ার্ক ত্রুটি: ' + err);
+          alert('Network error: ' + err);
         } finally {
-          btn.disabled = false;
-          btn.textContent = 'ফেসবুকে পাবলিশ করুন 🚀';
+          window.setBtnLoading(btn, false);
         }
       }
 

@@ -136,6 +136,34 @@ class Database:
             logger.error(f"Failed to delete post from Supabase: {e}")
             return None
 
+    def update_post_by_hash(self, url_hash: str, updates: dict) -> Optional[dict]:
+        """
+        Updates an existing post record in Supabase table 'posts' by url_hash.
+        This modifies the existing old post in-place without creating a duplicate.
+        """
+        if not self.client:
+            return None
+        try:
+            res = self.client.table("posts").update(updates).eq("url_hash", url_hash).execute()
+            if res.data and len(res.data) > 0:
+                logger.info(f"Updated post record in Supabase: {url_hash[:10]}...")
+                return res.data[0]
+            return None
+        except Exception as e:
+            logger.error(f"Failed to update post in Supabase: {e}")
+            return None
+
+    def reconnect(self, url: str, key: str) -> bool:
+        """Dynamically re-initializes connection to Supabase when new credentials are saved."""
+        try:
+            self.client = create_client(url, key)
+            logger.info("Successfully reconnected to Supabase.")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to reconnect to Supabase: {e}")
+            self.client = None
+            return False
+
     def get_last_template(self) -> Optional[str]:
         """
         Retrieves the template used in the most recently published post.

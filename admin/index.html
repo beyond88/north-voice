@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="assets/css/style.css">
-    <title>North Voice · বার্তা কক্ষ ও সম্পাদকীয় ড্যাশবোর্ড</title>
+    <title>North Voice · Newsroom Editorial Cockpit</title>
     <script>
       (function () {
         try {
@@ -38,7 +38,7 @@
       .badge-wait { background: #FEF3C7; color: #92400E; }
     </style>
   </head>
-  <body data-active="dashboard" data-crumbs="বার্তা কক্ষ | সার্বিক পরিস্থিতি">
+  <body data-active="dashboard" data-crumbs="Newsroom | Editorial Cockpit">
     <div class="shell">
       <div data-shell-sidebar></div>
       <div class="main">
@@ -48,18 +48,18 @@
         <!-- HERO -->
         <section class="hero">
           <div class="hero-text">
-            <span class="eyebrow" id="heroDate">রবিবার · ২৫ অক্টোবর · ২০২৬</span>
-            <h1 class="hero-title">স্বাগতম, <span class="accent">মুহিউদ্দীন কাদের</span> (প্রধান সম্পাদক)</h1>
-            <p class="hero-sub">উত্তরবঙ্গের ১৬ জেলা ও দেশের শীর্ষ সংবাদের দায়িত্বশীল ডিজিটাল মিডিয়া ইঞ্জিন। এআই ফটোকার্ড ও স্বয়ংক্রিয় ফেসবুক পোস্টিং পরিচালিত হচ্ছে।</p>
+            <span class="eyebrow" id="heroDate">Sunday · October 25, 2026</span>
+            <h1 class="hero-title">Welcome, <span class="accent" id="heroUserName">Mohiuddin Kader</span> (<span id="heroUserRole">Editor-in-Chief</span>)</h1>
+            <p class="hero-sub">The autonomous newsroom engine for 16 districts of North Bengal and national viral news. Powered by AI photocard design and Meta safe-pacing delivery.</p>
           </div>
           <div class="hero-actions">
             <a href="live-hunt.html" class="btn btn--primary">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              লাইভ নিউজ স্ক্যান
+              <span>Scan Live News</span>
             </a>
             <a href="custom-post.html" class="btn btn--ghost">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-              কাস্টম পোস্ট
+              <span>Custom Post</span>
             </a>
           </div>
         </section>
@@ -72,13 +72,13 @@
                 <div class="kpi-icon success">
                   <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8M8 9h2"/></svg>
                 </div>
-                <div class="kpi-label">মোট প্রকাশিত সংবাদ</div>
+                <div class="kpi-label">Total Published Posts</div>
               </div>
-              <span class="kpi-pill up" id="kpiTotalPill">সুপাবেস ডাটা</span>
+              <span class="kpi-pill up" id="kpiTotalPill">Cloud Database</span>
             </div>
             <div class="kpi-value" id="kpiTotalPosts">--</div>
             <div class="kpi-compare">
-              উত্তরবঙ্গ ও ভাইরাল খবরের মোট রেকর্ড
+              Total historical stories posted to Facebook
             </div>
           </article>
 
@@ -88,13 +88,13 @@
                 <div class="kpi-icon purple">
                   <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
-                <div class="kpi-label">আজকের পোস্ট সংখ্যা</div>
+                <div class="kpi-label">Today's Posts</div>
               </div>
-              <span class="kpi-pill up">আজকের দিন</span>
+              <span class="kpi-pill up">Active Day</span>
             </div>
             <div class="kpi-value" id="kpiTodayPosts">--</div>
             <div class="kpi-compare">
-              ফেসবুক পেজে সফলভাবে পাবলিশড
+              Successfully delivered to timeline feed
             </div>
           </article>
 
@@ -104,13 +104,13 @@
                 <div class="kpi-icon primary">
                   <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 </div>
-                <div class="kpi-label">সেফ পোস্টিং ইন্টারভাল</div>
+                <div class="kpi-label">Safe Pacing Interval</div>
               </div>
-              <span class="badge-template badge-safe" id="kpiCooldownPill">নিরাপদ</span>
+              <span class="badge-template badge-safe" id="kpiCooldownPill">Safe Window</span>
             </div>
-            <div class="kpi-value" id="kpiCooldownTime" style="font-size: 28px;">২৫+ মিনিট</div>
+            <div class="kpi-value" id="kpiCooldownTime" style="font-size: 26px;">25+ mins</div>
             <div class="kpi-compare" id="kpiCooldownSub">
-              ফেসবুক অ্যান্টি-স্প্যাম সুরক্ষা সক্রিয়
+              Meta anti-spam protection is active
             </div>
           </article>
 
@@ -120,13 +120,13 @@
                 <div class="kpi-icon danger">
                   <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
-                <div class="kpi-label">সংবাদকর্মী ও স্টাফ</div>
+                <div class="kpi-label">Editorial Roster</div>
               </div>
-              <span class="kpi-pill up">৬ জন সক্রিয়</span>
+              <span class="kpi-pill up">Active Duty</span>
             </div>
-            <div class="kpi-value" id="kpiStaffCount">৬</div>
+            <div class="kpi-value" id="kpiStaffCount">6</div>
             <div class="kpi-compare">
-              বার্তা বিভাগ ও জেলা ব্যুরো প্রতিনিধি
+              Editors, shift chiefs & district bureaus
             </div>
           </article>
         </section>
@@ -135,27 +135,27 @@
         <div class="card" style="margin-top: 24px; padding: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div>
-              <h2 style="font-size: 18px; font-weight: 700; margin: 0 0 4px 0;">সাম্প্রতিক প্রকাশিত সংবাদ (Recent Published Posts)</h2>
-              <p style="font-size: 13px; color: var(--t-muted); margin: 0;">ফেসবুক পেজে সফলভাবে পাবলিশ হওয়া সর্বশেষ সংবাদের তালিকা</p>
+              <h2 style="font-size: 18px; font-weight: 700; margin: 0 0 4px 0;">Recent Published Posts</h2>
+              <p style="font-size: 13px; color: var(--t-muted); margin: 0;">Latest stories delivered to the official Facebook Page timeline</p>
             </div>
-            <a href="posts.html" class="btn btn--ghost btn--sm">সকল পোস্ট দেখুন →</a>
+            <a href="posts.html" class="btn btn--ghost btn--sm">View All Posts →</a>
           </div>
 
           <div class="table-wrap">
             <table class="table" style="width: 100%;">
               <thead>
                 <tr>
-                  <th>শিরোনাম (Headline)</th>
-                  <th>ডিজাইন টেমপ্লেট</th>
-                  <th>সময়কাল</th>
-                  <th>স্ট্যাটাস</th>
-                  <th style="text-align: right;">অ্যাকশন</th>
+                  <th>Headline (Bengali)</th>
+                  <th>Template</th>
+                  <th>Published Time</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="recentPostsBody">
                 <tr>
                   <td colspan="5" style="text-align: center; padding: 30px; color: var(--t-muted);">
-                    ডাটা লোড হচ্ছে...
+                    Loading recent post records...
                   </td>
                 </tr>
               </tbody>
@@ -170,6 +170,17 @@
 
     <script type="module" src="assets/js/index.js"></script>
     <script>
+      function syncUserInfo() {
+        try {
+          const raw = localStorage.getItem('north_auth_user');
+          if (raw) {
+            const user = JSON.parse(raw);
+            if (user.name) document.getElementById('heroUserName').textContent = user.name;
+            if (user.role_en) document.getElementById('heroUserRole').textContent = user.role_en;
+          }
+        } catch (e) {}
+      }
+
       async function loadStats() {
         try {
           const res = await fetch('/api/stats');
@@ -183,16 +194,16 @@
           const coolSub = document.getElementById('kpiCooldownSub');
 
           if (data.minutes_since_last_post !== null) {
-            coolEl.textContent = data.minutes_since_last_post + ' মিনিট আগে';
+            coolEl.textContent = data.minutes_since_last_post + ' mins ago';
             if (data.safe_to_post) {
               coolPill.className = 'badge-template badge-safe';
-              coolPill.textContent = 'পোস্টিং উইন্ডো ওপেন';
-              coolSub.textContent = 'ফেসবুক পলিসি অনুযায়ী পরবর্তী পোস্টের জন্য নিরাপদ';
+              coolPill.textContent = 'Window Open';
+              coolSub.textContent = 'Safe to publish next post per Meta policy';
             } else {
               coolPill.className = 'badge-template badge-wait';
-              coolPill.textContent = 'কুলডাউন অপেক্ষা';
+              coolPill.textContent = 'Cooling Down';
               const waitMins = Math.ceil(25.0 - data.minutes_since_last_post);
-              coolSub.textContent = `স্প্যাম প্রতিরোধে আরও ${waitMins} মিনিট পর পোস্ট হবে`;
+              coolSub.textContent = `Wait ${waitMins} more mins to prevent spam flagging`;
             }
           }
         } catch (e) {
@@ -207,17 +218,17 @@
           const tbody = document.getElementById('recentPostsBody');
           
           if (!data.posts || data.posts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px;">কোনো পোস্ট পাওয়া যায়নি।</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--t-muted);">No published posts found. Configure database credentials in <a href="settings.html" style="color:#EF4444; font-weight:600;">Settings</a> to load history.</td></tr>';
             return;
           }
 
           tbody.innerHTML = data.posts.map(p => {
             const tmpl = p.template || 'breaking';
             const tmplBadge = `<span class="badge-template badge-${tmpl}">${tmpl}</span>`;
-            const dateStr = p.created_at ? new Date(p.created_at).toLocaleString('bn-BD') : '-';
+            const dateStr = p.created_at ? new Date(p.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
             const fbBtn = p.fb_url 
-              ? `<a href="${p.fb_url}" target="_blank" class="btn btn--sm btn--ghost" style="color:#2563EB;">ফেসবুকে দেখুন ↗</a>`
-              : `<span style="color:var(--t-muted); font-size:12px;">অটোমেটেড</span>`;
+              ? `<a href="${p.fb_url}" target="_blank" class="btn btn--sm btn--ghost" style="color:#2563EB;">View FB ↗</a>`
+              : `<span style="color:var(--t-muted); font-size:12px;">Automated</span>`;
 
             return `
               <tr>
@@ -230,7 +241,7 @@
                 <td><span class="badge-template badge-safe">Live on Feed</span></td>
                 <td style="text-align: right;">
                   ${fbBtn}
-                  <button onclick="deletePost('${p.url_hash}')" class="btn btn--sm btn--danger" style="margin-left: 6px;">ডিলিট</button>
+                  <button onclick="deletePost('${p.url_hash}', this)" class="btn btn--sm btn--danger" style="margin-left: 6px;">Delete</button>
                 </td>
               </tr>
             `;
@@ -240,25 +251,29 @@
         }
       }
 
-      window.deletePost = async function(urlHash) {
-        if (!confirm('আপনি কি নিশ্চিত যে এই পোস্টটি ডাটাবেস ও ফেসবুক পেজ থেকে সম্পূর্ণ মুছে ফেলতে চান?')) {
+      window.deletePost = async function(urlHash, btn) {
+        if (!confirm('Warning: This will permanently delete the post from both Facebook and your database. Proceed?')) {
           return;
         }
+        window.setBtnLoading(btn, true, 'Deleting...');
         try {
           const res = await fetch(`/api/posts/${urlHash}`, { method: 'DELETE' });
           const data = await res.json();
           if (data.success) {
-            alert('পোস্টটি সফলভাবে মুছে ফেলা হয়েছে!');
+            alert('Post removed successfully.');
             loadRecentPosts();
             loadStats();
           } else {
-            alert('মুছতে ব্যর্থ হয়েছে: ' + (data.detail || 'অজানা ত্রুটি'));
+            alert('Delete failed: ' + (data.detail || 'Error'));
           }
         } catch (e) {
-          alert('নেটওয়ার্ক ত্রুটি: ' + e);
+          alert('Network error: ' + e);
+        } finally {
+          window.setBtnLoading(btn, false);
         }
       };
 
+      syncUserInfo();
       loadStats();
       loadRecentPosts();
     </script>

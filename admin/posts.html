@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="assets/css/style.css">
-    <title>North Voice · প্রকাশিত সংবাদ ও ফেসবুক পেজ ম্যানেজার</title>
+    <title>North Voice · Published Posts & Facebook Manager</title>
     <script>
       (function () {
         try {
@@ -35,9 +35,48 @@
       .badge-quote { background: #F3E8FF; color: #6B21A8; }
       .badge-general { background: #E2E8F0; color: #334155; }
       .badge-safe { background: #DCFCE7; color: #166534; }
+
+      /* Edit Modal */
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.75);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-backdrop.is-open { display: flex; }
+      .modal-card {
+        background: var(--bg-surface, #ffffff);
+        border-radius: 12px;
+        max-width: 620px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 24px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+      }
+
+      .tmpl-pill {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: var(--bg-surface, #fff);
+        color: var(--t-primary, #0f172a);
+        transition: all 0.2s ease;
+      }
+      .tmpl-pill.active {
+        background: #EF4444;
+        color: #fff;
+        border-color: #EF4444;
+      }
     </style>
   </head>
-  <body data-active="posts" data-crumbs="সংবাদ ব্যবস্থাপনা | প্রকাশিত সংবাদ">
+  <body data-active="posts" data-crumbs="Newsroom | Published Posts">
     <div class="shell">
       <div data-shell-sidebar></div>
       <div class="main">
@@ -47,34 +86,46 @@
         <!-- HERO -->
         <section class="hero">
           <div class="hero-text">
-            <span class="eyebrow">মেটা গ্রাফ এপিআই ও সুপাবেস সিঙ্ক</span>
-            <h1 class="hero-title">প্রকাশিত সংবাদ ও <span class="accent">ফেসবুক ম্যানেজার</span></h1>
-            <p class="hero-sub">ফেসবুক পেজে সফলভাবে পাবলিশ হওয়া সকল সংবাদের রিয়েল-টাইম তথ্য ও ১-ক্লিক ডিলিট সুবিধা।</p>
+            <span class="eyebrow">Meta Graph API & Supabase Sync</span>
+            <h1 class="hero-title">Published Posts & <span class="accent">Facebook Manager</span></h1>
+            <p class="hero-sub">View, edit, or delete published news posts directly from your Facebook Page feed and Supabase database.</p>
           </div>
           <div class="hero-actions">
-            <button class="btn btn--primary" onclick="loadAllPosts()">
+            <button class="btn btn--primary" id="btnRefreshPosts" onclick="loadAllPosts()">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              রিফ্রেশ করুন
+              <span>Refresh Posts</span>
             </button>
           </div>
         </section>
+
+        <!-- SUPABASE STATUS BANNER (Shown if disconnected) -->
+        <div id="dbWarningBanner" style="display: none; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 20px;">⚠️</span>
+            <div style="font-size: 13px; color: var(--t-primary);">
+              <strong>Supabase database is not connected locally.</strong><br>
+              <span class="t-muted">Posts saved during GitHub Actions runs cannot be listed until you configure your Supabase URL & Key in .env.</span>
+            </div>
+          </div>
+          <a href="settings.html" class="btn btn--sm btn--primary">Configure Supabase Database</a>
+        </div>
 
         <!-- FILTERS & TABLE -->
         <div class="card" style="padding: 24px;">
           <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 20px;">
             <div style="display: flex; gap: 10px; flex: 1; max-width: 600px;">
-              <input type="text" id="postSearch" placeholder="শিরোনাম বা হ্যাশ দিয়ে খুঁজুন..." class="input" style="font-size: 13px;" onkeyup="filterPosts()">
+              <input type="text" id="postSearch" placeholder="Search by headline or hash..." class="input" style="font-size: 13px;" onkeyup="filterPosts()">
               <select id="templateFilter" class="input" style="max-width: 180px; font-size: 13px;" onchange="filterPosts()">
-                <option value="all">সব টেমপ্লেট</option>
-                <option value="viral">Viral (স্লেট ব্লু)</option>
-                <option value="breaking">Breaking (ক্রিমসন)</option>
-                <option value="inqilab_style">Inqilab (সম্পাদকীয়)</option>
-                <option value="quote">Quote (উক্তি)</option>
-                <option value="general">General (মডার্ন ব্লু)</option>
+                <option value="all">All Templates</option>
+                <option value="viral">Viral (Slate Blue)</option>
+                <option value="breaking">Breaking (Crimson)</option>
+                <option value="inqilab_style">Inqilab (Editorial)</option>
+                <option value="quote">Quote Card</option>
+                <option value="general">General (Modern Blue)</option>
               </select>
             </div>
             <div id="postsCountBadge" style="font-size: 13px; color: var(--t-muted); font-weight: 600;">
-              মোট পোস্ট: গণনা চলছে...
+              Total Posts: Loading...
             </div>
           </div>
 
@@ -82,21 +133,70 @@
             <table class="table" style="width: 100%;">
               <thead>
                 <tr>
-                  <th style="width: 50%;">সংবাদের শিরোনাম (Headline)</th>
-                  <th>ডিজাইন টেমপ্লেট</th>
-                  <th>পোস্ট আইডি</th>
-                  <th>পাবলিশ সময়</th>
-                  <th style="text-align: right;">অ্যাকশন</th>
+                  <th style="width: 48%;">News Headline</th>
+                  <th>Template</th>
+                  <th>Post ID</th>
+                  <th>Published At</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="postsTableBody">
                 <tr>
                   <td colspan="5" style="text-align: center; padding: 40px; color: var(--t-muted);">
-                    ডাটাবেস থেকে পোস্টের তালিকা লোড হচ্ছে...
+                    Loading published posts from database...
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- EDIT POST MODAL -->
+        <div class="modal-backdrop" id="editPostModal">
+          <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Edit Existing Post</h3>
+              <button onclick="closeEditModal()" class="icon-btn" style="border:none; background:transparent; cursor:pointer;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            <p style="font-size: 12.5px; color: var(--t-muted); margin-bottom: 16px;">
+              Updates the existing post on both your Facebook Page Feed and Supabase database without creating a duplicate.
+            </p>
+
+            <form onsubmit="event.preventDefault(); submitPostEdit();">
+              <input type="hidden" id="editUrlHash">
+
+              <div class="field" style="margin-bottom: 14px;">
+                <label class="field-label">Post Headline (Bengali)</label>
+                <input type="text" id="editHeadline" class="input" required>
+              </div>
+
+              <div class="field" style="margin-bottom: 14px;">
+                <label class="field-label">Design Template</label>
+                <input type="hidden" id="editTemplate" value="breaking">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+                  <button type="button" class="tmpl-pill" data-tmpl="viral" onclick="setEditTemplate('viral')">🌟 Viral</button>
+                  <button type="button" class="tmpl-pill active" data-tmpl="breaking" onclick="setEditTemplate('breaking')">🚨 Breaking</button>
+                  <button type="button" class="tmpl-pill" data-tmpl="inqilab_style" onclick="setEditTemplate('inqilab_style')">📰 Inqilab</button>
+                  <button type="button" class="tmpl-pill" data-tmpl="quote" onclick="setEditTemplate('quote')">💬 Quote</button>
+                  <button type="button" class="tmpl-pill" data-tmpl="general" onclick="setEditTemplate('general')">💎 General</button>
+                </div>
+              </div>
+
+              <div class="field" style="margin-bottom: 16px;">
+                <label class="field-label">Facebook Post Caption (Message)</label>
+                <textarea id="editCaption" class="input" rows="4" placeholder="Update the Facebook page caption message..."></textarea>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 16px;">
+                <button type="button" class="btn btn--ghost" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn btn--primary" id="btnSavePostEdit">
+                  <span>Update Post 🚀</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -110,31 +210,51 @@
       let allPosts = [];
 
       async function loadAllPosts() {
+        const refreshBtn = document.getElementById('btnRefreshPosts');
+        window.setBtnLoading(refreshBtn, true, 'Refreshing...');
+
         try {
           const res = await fetch('/api/posts?limit=100');
           const data = await res.json();
           allPosts = data.posts || [];
-          document.getElementById('postsCountBadge').textContent = `মোট পোস্ট: ${allPosts.length} টি`;
+          document.getElementById('postsCountBadge').textContent = `Total Posts: ${allPosts.length}`;
+
+          // Check if Supabase is connected
+          const banner = document.getElementById('dbWarningBanner');
+          if (!data.supabase_connected && allPosts.length === 0) {
+            banner.style.display = 'flex';
+          } else {
+            banner.style.display = 'none';
+          }
+
           renderPostsTable(allPosts);
         } catch (e) {
           console.error('Failed to load posts:', e);
+        } finally {
+          window.setBtnLoading(refreshBtn, false);
         }
       }
 
       function renderPostsTable(posts) {
         const tbody = document.getElementById('postsTableBody');
         if (!posts || posts.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px;">কোনো পোস্ট পাওয়া যায়নি।</td></tr>';
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align:center; padding:50px;">
+                <div style="font-size:16px; font-weight:700; margin-bottom:6px;">No published posts found.</div>
+                <div style="font-size:13px; color:var(--t-muted);">Ensure Supabase is configured in <a href="settings.html" style="color:#EF4444; font-weight:600;">Settings</a> to load your post history.</div>
+              </td>
+            </tr>`;
           return;
         }
 
-        tbody.innerHTML = posts.map(p => {
+        tbody.innerHTML = posts.map((p, idx) => {
           const tmpl = p.template || 'breaking';
           const tmplBadge = `<span class="badge-template badge-${tmpl}">${tmpl}</span>`;
-          const dateStr = p.created_at ? new Date(p.created_at).toLocaleString('bn-BD') : '-';
+          const dateStr = p.created_at ? new Date(p.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
           const fbBtn = p.fb_url
-            ? `<a href="${p.fb_url}" target="_blank" class="btn btn--sm btn--ghost" style="color:#2563EB;">ফেসবুক ভিউ ↗</a>`
-            : `<span style="font-size:12px; color:var(--t-muted);">অটোমেটেড</span>`;
+            ? `<a href="${p.fb_url}" target="_blank" class="btn btn--sm btn--ghost" style="color:#2563EB;">View on FB ↗</a>`
+            : `<span style="font-size:12px; color:var(--t-muted);">Automated</span>`;
 
           return `
             <tr>
@@ -143,18 +263,23 @@
                   ${p.headline}
                 </div>
                 <div style="font-size: 11.5px; color: var(--t-muted); display: flex; gap: 12px;">
-                  <span>মূল সূত্র: <a href="${p.news_url}" target="_blank" style="color:var(--t-muted); text-decoration:underline;">লিংক</a></span>
-                  <span>SHA256: ${p.url_hash ? p.url_hash.slice(0, 12) + '...' : '-'}</span>
+                  <span>Source: <a href="${p.news_url}" target="_blank" style="color:var(--t-muted); text-decoration:underline;">Article Link</a></span>
+                  <span>Hash: ${p.url_hash ? p.url_hash.slice(0, 10) + '...' : '-'}</span>
                 </div>
               </td>
               <td>${tmplBadge}</td>
               <td style="font-size: 12px; font-family: monospace;">${p.fb_post_id || '-'}</td>
               <td style="font-size: 12px; color: var(--t-muted);">${dateStr}</td>
               <td style="text-align: right;">
-                ${fbBtn}
-                <button onclick="deletePost('${p.url_hash}')" class="btn btn--sm btn--danger" style="margin-left: 6px;">
-                  মুছে ফেলুন
-                </button>
+                <div style="display:inline-flex; gap:6px; align-items:center;">
+                  ${fbBtn}
+                  <button onclick="openEditModal(${idx})" class="btn btn--sm btn--ghost" style="color:#10B981;">
+                    Edit
+                  </button>
+                  <button onclick="deletePost('${p.url_hash}', this)" class="btn btn--sm btn--danger">
+                    Delete
+                  </button>
+                </div>
               </td>
             </tr>
           `;
@@ -174,22 +299,77 @@
         renderPostsTable(filtered);
       }
 
-      window.deletePost = async function(urlHash) {
-        if (!confirm('সতর্কতা: এটি সুপাবেস ডাটাবেস এবং ফেসবুক পেজ উভয় স্থান থেকেই পোস্টটি স্থায়ীভাবে মুছে ফেলবে। নিশ্চিত করতে OK চাপুন।')) {
+      window.openEditModal = function(idx) {
+        const p = allPosts[idx];
+        if (!p) return;
+        document.getElementById('editUrlHash').value = p.url_hash;
+        document.getElementById('editHeadline').value = p.headline;
+        document.getElementById('editCaption').value = p.headline;
+        setEditTemplate(p.template || 'breaking');
+        document.getElementById('editPostModal').classList.add('is-open');
+      };
+
+      window.closeEditModal = function() {
+        document.getElementById('editPostModal').classList.remove('is-open');
+      };
+
+      window.setEditTemplate = function(tmpl) {
+        document.getElementById('editTemplate').value = tmpl;
+        document.querySelectorAll('#editPostModal .tmpl-pill').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tmpl === tmpl);
+        });
+      };
+
+      window.submitPostEdit = async function() {
+        const btn = document.getElementById('btnSavePostEdit');
+        const urlHash = document.getElementById('editUrlHash').value;
+        const headline = document.getElementById('editHeadline').value.trim();
+        const caption = document.getElementById('editCaption').value.trim();
+        const template = document.getElementById('editTemplate').value;
+
+        window.setBtnLoading(btn, true, 'Updating Post...');
+
+        try {
+          const res = await fetch(`/api/posts/${urlHash}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ headline, caption, template })
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert('✅ Existing post updated successfully on Facebook and database!');
+            closeEditModal();
+            loadAllPosts();
+          } else {
+            alert('Update failed: ' + (data.detail || 'Error'));
+          }
+        } catch (e) {
+          alert('Network error: ' + e);
+        } finally {
+          window.setBtnLoading(btn, false);
+        }
+      };
+
+      window.deletePost = async function(urlHash, btn) {
+        if (!confirm('Warning: This will permanently delete the post from BOTH your Facebook Page feed and Supabase database. Are you sure?')) {
           return;
         }
+
+        window.setBtnLoading(btn, true, 'Deleting...');
 
         try {
           const res = await fetch(`/api/posts/${urlHash}`, { method: 'DELETE' });
           const data = await res.json();
           if (data.success) {
-            alert('পোস্টটি সফলভাবে মুছে ফেলা হয়েছে!');
+            alert('Post successfully removed from Facebook page and database.');
             loadAllPosts();
           } else {
-            alert('মুছতে ব্যর্থ হয়েছে: ' + (data.detail || 'ত্রুটি'));
+            alert('Delete failed: ' + (data.detail || 'Error'));
           }
         } catch (e) {
-          alert('নেটওয়ার্ক ত্রুটি: ' + e);
+          alert('Network error: ' + e);
+        } finally {
+          window.setBtnLoading(btn, false);
         }
       };
 

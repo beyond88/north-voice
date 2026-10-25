@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="assets/css/style.css">
-    <title>North Voice · স্টাফ ও দায়িত্ব বণ্টন (Newspaper Team Management)</title>
+    <title>North Voice · Editorial Staff & Roster</title>
     <script>
       (function () {
         try {
@@ -26,6 +26,7 @@
         border-radius: 6px;
         font-size: 11px;
         font-weight: 700;
+        text-transform: capitalize;
       }
       .role-editor_in_chief { background: #FEE2E2; color: #991B1B; }
       .role-news_editor { background: #FEF08A; color: #854D0E; }
@@ -41,7 +42,7 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: var(--c-primary, #EF4444);
+        background: #EF4444;
         color: #fff;
         display: inline-flex;
         align-items: center;
@@ -51,31 +52,29 @@
         margin-right: 12px;
       }
 
-      /* Modal styling */
+      /* Modals */
       .modal-backdrop {
         display: none;
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.6);
+        background: rgba(0,0,0,0.65);
         z-index: 9999;
         align-items: center;
         justify-content: center;
       }
-      .modal-backdrop.is-open {
-        display: flex;
-      }
+      .modal-backdrop.is-open { display: flex; }
       .modal-content {
         background: var(--bg-surface, #ffffff);
         color: var(--t-primary, #000);
         width: 100%;
-        max-width: 500px;
+        max-width: 520px;
         border-radius: 12px;
         padding: 24px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.3);
       }
     </style>
   </head>
-  <body data-active="staff" data-crumbs="স্টাফ ও রিপোর্টার্স | দায়িত্ব বণ্টন">
+  <body data-active="staff" data-crumbs="Editorial Staff | Staff Directory & Roles">
     <div class="shell">
       <div data-shell-sidebar></div>
       <div class="main">
@@ -85,14 +84,14 @@
         <!-- HERO -->
         <section class="hero">
           <div class="hero-text">
-            <span class="eyebrow">সাংগঠনিক কাঠামো ও নিউজরুম পলিসি</span>
-            <h1 class="hero-title">সংবাদপত্র কর্মী ও <span class="accent">দায়িত্ব বণ্টন</span></h1>
-            <p class="hero-sub">প্রথম সারির জাতীয় দৈনিকের আদলে বার্তা বিভাগ, ব্যুরো প্রধান, নিজস্ব প্রতিবেদক ও সোশ্যাল মিডিয়া টিমের সমন্বিত ভূমিকা ব্যবস্থাপনা।</p>
+            <span class="eyebrow">Newsroom Hierarchy & Governance</span>
+            <h1 class="hero-title">Editorial Staff & <span class="accent">Role Directory</span></h1>
+            <p class="hero-sub">Manage digital newspaper editorial desks, bureau chiefs, reporters, social media managers, and permission tiers.</p>
           </div>
           <div class="hero-actions">
             <button class="btn btn--primary" onclick="openAddModal()">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-              নতুন কর্মী নিয়োগ
+              <span>Add Staff Member</span>
             </button>
           </div>
         </section>
@@ -105,11 +104,11 @@
                 <div class="kpi-icon primary">
                   <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 </div>
-                <div class="kpi-label">মোট সংবাদকর্মী</div>
+                <div class="kpi-label">Total Staff</div>
               </div>
             </div>
-            <div class="kpi-value" id="statTotalStaff">৬</div>
-            <div class="kpi-compare">সকল বিভাগ ও ব্যুরো মিলিয়ে</div>
+            <div class="kpi-value" id="statTotalStaff">6</div>
+            <div class="kpi-compare">Across all editorial desks & bureaus</div>
           </article>
 
           <article class="kpi-card c-success">
@@ -118,12 +117,12 @@
                 <div class="kpi-icon success">
                   <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <div class="kpi-label">সক্রিয় স্টাফ</div>
+                <div class="kpi-label">Active on Duty</div>
               </div>
-              <span class="kpi-pill up">১০০% ডিউটি</span>
+              <span class="kpi-pill up">100% Roster</span>
             </div>
-            <div class="kpi-value" id="statActiveStaff">৬</div>
-            <div class="kpi-compare">বর্তমানে দায়িত্ব পালনরত</div>
+            <div class="kpi-value" id="statActiveStaff">6</div>
+            <div class="kpi-compare">Currently active members</div>
           </article>
 
           <article class="kpi-card c-purple">
@@ -132,11 +131,11 @@
                 <div class="kpi-icon purple">
                   <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 </div>
-                <div class="kpi-label">ব্যুরো ও জেলা ডেস্ক</div>
+                <div class="kpi-label">Regional Bureaus</div>
               </div>
             </div>
-            <div class="kpi-value">৪টি ব্যুরো</div>
-            <div class="kpi-compare">রংপুর, বগুড়া, সিরাজগঞ্জ ও ঢাকা ডেস্ক</div>
+            <div class="kpi-value">4 Desks</div>
+            <div class="kpi-compare">Rangpur, Bogura, Sirajganj, Central</div>
           </article>
 
           <article class="kpi-card c-danger">
@@ -145,11 +144,11 @@
                 <div class="kpi-icon danger">
                   <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </div>
-                <div class="kpi-label">সম্পাদকীয় স্তর (Roles)</div>
+                <div class="kpi-label">Editorial Levels</div>
               </div>
             </div>
-            <div class="kpi-value">৫টি লেভেল</div>
-            <div class="kpi-compare">সুনির্দিষ্ট পারমিশন ও অনুমোদন নীতি</div>
+            <div class="kpi-value">5 Tiers</div>
+            <div class="kpi-compare">Granular permission control</div>
           </article>
         </section>
 
@@ -157,11 +156,11 @@
         <div class="card" style="padding: 24px; margin-bottom: 24px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div>
-              <h2 style="font-size: 18px; font-weight: 700; margin: 0 0 4px 0;">নিউজ রুম কর্মী তালিকা (Editorial Staff Directory)</h2>
-              <p style="font-size: 13px; color: var(--t-muted); margin: 0;">বার্তা কক্ষের সকল সম্পাদক, সহ-সম্পাদক, ব্যুরো চিফ ও প্রতিনিধিদের বিবরণ</p>
+              <h2 style="font-size: 18px; font-weight: 700; margin: 0 0 4px 0;">Newsroom Editorial Roster</h2>
+              <p style="font-size: 13px; color: var(--t-muted); margin: 0;">Comprehensive roster of editors, reporters, shift in-charges, and bureau staff</p>
             </div>
             <div style="display: flex; gap: 10px;">
-              <input type="text" id="staffSearch" placeholder="নাম বা ব্যুরো দিয়ে খুঁজুন..." class="input" style="max-width: 250px; font-size: 13px;" onkeyup="filterStaff()">
+              <input type="text" id="staffSearch" placeholder="Search by name, role or desk..." class="input" style="max-width: 260px; font-size: 13px;" onkeyup="filterStaff()">
             </div>
           </div>
 
@@ -169,18 +168,18 @@
             <table class="table" style="width: 100%;">
               <thead>
                 <tr>
-                  <th>কর্মী ও পরিচয়</th>
-                  <th>সম্পাদকীয় পদবি (Role)</th>
-                  <th>দায়িত্বপ্রাপ্ত ব্যুরো / জেলা ডেস্ক</th>
-                  <th>যোগাযোগ</th>
-                  <th>স্ট্যাটাস</th>
-                  <th style="text-align: right;">অ্যাকশন</th>
+                  <th>Staff Member</th>
+                  <th>Editorial Role</th>
+                  <th>Bureau / Desk</th>
+                  <th>Contact Info</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
                 </tr>
               </thead>
               <tbody id="staffTableBody">
                 <tr>
                   <td colspan="6" style="text-align: center; padding: 30px; color: var(--t-muted);">
-                    ডাটা লোড হচ্ছে...
+                    Loading staff directory...
                   </td>
                 </tr>
               </tbody>
@@ -188,31 +187,31 @@
           </div>
         </div>
 
-        <!-- NEWSPAPER ROLES & PERMISSIONS REFERENCE -->
+        <!-- NEWSPAPER ROLES REFERENCE -->
         <div class="card" style="padding: 24px;">
-          <h2 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">সংবাদপত্র পদমর্যাদা ও পারমিশন গাইডলাইন</h2>
-          <p style="font-size: 13px; color: var(--t-muted); margin-bottom: 20px;">একটি পেশাদার গণমাধ্যমের নীতি অনুযায়ী প্রতিটি পদের দায়িত্ব ও ক্ষমতাসমূহ:</p>
+          <h2 style="font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">Newspaper Role Hierarchy & Permissions Reference</h2>
+          <p style="font-size: 13px; color: var(--t-muted); margin-bottom: 20px;">Standard newsroom responsibilities based on institutional digital media policies:</p>
           
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px;">
             <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-              <span class="role-badge role-editor_in_chief">প্রধান সম্পাদক (Editor-in-Chief)</span>
-              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">সর্বোচ্চ সম্পাদকীয় ও প্রশাসনিক ক্ষমতা। স্টাফ নিয়োগ, বরখাস্ত, পলিসি পরিবর্তন, ফেসবুকে সরাসরি পোস্ট ও পোস্ট ডিলিটের চূড়ান্ত ক্ষমতা।</p>
+              <span class="role-badge role-editor_in_chief">Editor-in-Chief</span>
+              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">Ultimate editorial authority. Staff recruitment, policy enforcement, direct Facebook instant publishing, and post deletion rights.</p>
             </div>
             <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-              <span class="role-badge role-news_editor">বার্তা সম্পাদক (News Editor)</span>
-              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">সংবাদ সিলেকশন, এআই ক্যাপশন ও ফটোকার্ড অনুমোদন, লাইভ নিউজ স্ক্যান, ব্রেকিং ও ভাইরাল খবরের ১-ক্লিক পাবলিশিং ও পোস্ট ডিলিট।</p>
+              <span class="role-badge role-news_editor">News Editor</span>
+              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">Front-page lead story approval, breaking news triage, editorial headline polish, and live publishing oversight.</p>
             </div>
             <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-              <span class="role-badge role-sub_editor">সহ-সম্পাদক (Sub-Editor)</span>
-              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">শিফট ইনচার্জ হিসেবে নিয়মিত ফিড স্ক্যান, রিপোর্টারদের প্রেরিত সংবাদের তথ্য যাচাই, ফটোকার্ড প্রিভিউ ও বার্তা সম্পাদকের কাছে পাঠানো।</p>
+              <span class="role-badge role-sub_editor">Sub-Editor / Shift In-Charge</span>
+              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">Feed monitoring, story curation, photocard template selection and preview review before publication.</p>
             </div>
             <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-              <span class="role-badge role-reporter">নিজস্ব প্রতিবেদক (Reporter / Bureau)</span>
-              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">উত্তরবঙ্গের মাঠপর্যায় থেকে স্থানীয় সংবাদ, তাৎক্ষণিক ঘটনা ও আসল ছবি প্রেরণ করা এবং ড্রাফট পোস্ট তৈরি করা।</p>
+              <span class="role-badge role-reporter">Staff Reporter / Bureau Desk</span>
+              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">District and upazila level ground reporting, spot photo sourcing, and news draft submissions.</p>
             </div>
             <div style="border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-              <span class="role-badge role-social_media_manager">সোশ্যাল মিডিয়া ম্যানেজার (Distribution)</span>
-              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">ফেসবুক পেজের রিচ মনিটরিং, ফলোয়ারদের কমেন্ট উত্তর, অর্গানিক রিচ স্কোর ও ফেসবুক স্প্যাম রেটিং পর্যবেক্ষণ।</p>
+              <span class="role-badge role-social_media_manager">Social Media Manager</span>
+              <p style="font-size: 13px; margin: 10px 0 0 0; line-height: 1.5;">Facebook audience engagement, safe 30-min pacing coordination, and Meta algorithm spam score monitoring.</p>
             </div>
           </div>
         </div>
@@ -226,39 +225,98 @@
     <div class="modal-backdrop" id="addStaffModal">
       <div class="modal-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h3 style="margin: 0; font-size: 18px; font-weight: 700;">নতুন সংবাদকর্মী যুক্ত করুন</h3>
-          <button onclick="closeAddModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--t-muted);">✕</button>
+          <h3 style="font-size: 18px; font-weight: 700; margin: 0;">Add New Staff Member</h3>
+          <button onclick="closeAddModal()" class="icon-btn" style="border:none; background:transparent; cursor:pointer;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
         </div>
-        <form onsubmit="submitStaff(event)">
+        <form onsubmit="submitAddStaff(event)">
           <div class="field" style="margin-bottom: 14px;">
-            <label class="field-label">পূর্ণ নাম (Full Name)</label>
-            <input type="text" id="staffName" class="input" placeholder="উদা: ফখরুল ইসলাম" required>
+            <label class="field-label">Full Name</label>
+            <input type="text" id="staffName" class="input" placeholder="e.g. Tanvir Ahmed" required>
           </div>
           <div class="field" style="margin-bottom: 14px;">
-            <label class="field-label">অফিশিয়াল ইমেইল (Email)</label>
-            <input type="email" id="staffEmail" class="input" placeholder="name@northvoice.com" required>
+            <label class="field-label">Email Address (Login ID)</label>
+            <input type="email" id="staffEmail" class="input" placeholder="e.g. tanvir@northvoice.com" required>
           </div>
           <div class="field" style="margin-bottom: 14px;">
-            <label class="field-label">সম্পাদকীয় পদবি (Role)</label>
-            <select id="staffRole" class="input" required>
-              <option value="news_editor">বার্তা সম্পাদক (News Editor)</option>
-              <option value="sub_editor">সহ-সম্পাদক (Sub-Editor)</option>
-              <option value="reporter">নিজস্ব প্রতিবেদক / জেলা প্রতিনিধি (Reporter)</option>
-              <option value="social_media_manager">সোশ্যাল মিডিয়া ম্যানেজার (Social Media)</option>
-              <option value="editor_in_chief">প্রধান সম্পাদক (Editor-in-Chief)</option>
+            <label class="field-label">Editorial Role</label>
+            <select id="staffRole" class="input">
+              <option value="reporter">Staff Reporter (নিজস্ব প্রতিবেদক)</option>
+              <option value="sub_editor">Sub-Editor / Shift In-Charge (সহ-সম্পাদক)</option>
+              <option value="news_editor">News Editor (বার্তা সম্পাদক)</option>
+              <option value="social_media_manager">Social Media Manager</option>
+              <option value="editor_in_chief">Editor-in-Chief (প্রধান সম্পাদক)</option>
             </select>
           </div>
           <div class="field" style="margin-bottom: 14px;">
-            <label class="field-label">দায়িত্বপ্রাপ্ত ব্যুরো / জেলা ডেস্ক</label>
-            <input type="text" id="staffBureau" class="input" placeholder="উদা: বগুড়া ব্যুরো / কেন্দ্রীয় বার্তা বিভাগ">
+            <label class="field-label">Bureau / Regional Desk</label>
+            <input type="text" id="staffBureau" class="input" placeholder="e.g. Dinajpur Bureau" required>
           </div>
           <div class="field" style="margin-bottom: 20px;">
-            <label class="field-label">ফোন নম্বর (Phone)</label>
-            <input type="text" id="staffPhone" class="input" placeholder="+880 1700-000000">
+            <label class="field-label">Contact Phone</label>
+            <input type="text" id="staffPhone" class="input" placeholder="+880 17XX-XXXXXX">
           </div>
           <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" class="btn btn--ghost" onclick="closeAddModal()">বাতিল</button>
-            <button type="submit" class="btn btn--primary">নিয়োগ নিশ্চিত করুন</button>
+            <button type="button" class="btn btn--ghost" onclick="closeAddModal()">Cancel</button>
+            <button type="submit" class="btn btn--primary" id="btnAddStaffSubmit">
+              <span>Save Staff Member</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- EDIT STAFF MODAL -->
+    <div class="modal-backdrop" id="editStaffModal">
+      <div class="modal-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="font-size: 18px; font-weight: 700; margin: 0;">Edit Staff Member</h3>
+          <button onclick="closeEditStaffModal()" class="icon-btn" style="border:none; background:transparent; cursor:pointer;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <form onsubmit="submitEditStaff(event)">
+          <input type="hidden" id="editStaffId">
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field-label">Full Name</label>
+            <input type="text" id="editStaffName" class="input" required>
+          </div>
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field-label">Email Address (Login ID)</label>
+            <input type="email" id="editStaffEmail" class="input" required>
+          </div>
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field-label">Editorial Role</label>
+            <select id="editStaffRole" class="input">
+              <option value="editor_in_chief">Editor-in-Chief (প্রধান সম্পাদক)</option>
+              <option value="news_editor">News Editor (বার্তা সম্পাদক)</option>
+              <option value="sub_editor">Sub-Editor / Shift In-Charge (সহ-সম্পাদক)</option>
+              <option value="reporter">Staff Reporter (নিজস্ব প্রতিবেদক)</option>
+              <option value="social_media_manager">Social Media Manager</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field-label">Bureau / Regional Desk</label>
+            <input type="text" id="editStaffBureau" class="input" required>
+          </div>
+          <div class="field" style="margin-bottom: 14px;">
+            <label class="field-label">Contact Phone</label>
+            <input type="text" id="editStaffPhone" class="input">
+          </div>
+          <div class="field" style="margin-bottom: 20px;">
+            <label class="field-label">Account Status</label>
+            <select id="editStaffStatus" class="input">
+              <option value="active">Active (সক্রিয়)</option>
+              <option value="leave">On Leave (ছুটিতে)</option>
+              <option value="suspended">Suspended (স্থগিত)</option>
+            </select>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn--ghost" onclick="closeEditStaffModal()">Cancel</button>
+            <button type="submit" class="btn btn--primary" id="btnEditStaffSubmit">
+              <span>Save Changes</span>
+            </button>
           </div>
         </form>
       </div>
@@ -273,24 +331,24 @@
           const res = await fetch('/api/staff');
           const data = await res.json();
           allStaffData = data.staff || [];
-          renderStaffTable(allStaffData);
           document.getElementById('statTotalStaff').textContent = allStaffData.length;
           document.getElementById('statActiveStaff').textContent = allStaffData.filter(s => s.status === 'active').length;
+          renderStaffTable(allStaffData);
         } catch (e) {
           console.error('Failed to load staff:', e);
         }
       }
 
-      function renderStaffTable(staffList) {
+      function renderStaffTable(staff) {
         const tbody = document.getElementById('staffTableBody');
-        if (!staffList || staffList.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px;">কোনো কর্মী পাওয়া যায়নি।</td></tr>';
+        if (!staff || staff.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px;">No staff records found.</td></tr>';
           return;
         }
 
-        tbody.innerHTML = staffList.map(s => {
-          const roleBadge = `<span class="role-badge role-${s.role}">${s.role_bn || s.role}</span>`;
-          const statusBadge = `<span class="role-badge status-${s.status}">${s.status === 'active' ? 'সক্রিয়' : 'স্থগিত'}</span>`;
+        tbody.innerHTML = staff.map((s, idx) => {
+          const roleBadge = `<span class="role-badge role-${s.role}">${s.role_en || s.role}</span>`;
+          const statusBadge = `<span class="role-badge status-${s.status}">${s.status.toUpperCase()}</span>`;
 
           return `
             <tr>
@@ -299,22 +357,29 @@
                   <div class="staff-avatar">${s.avatar_initials || 'ST'}</div>
                   <div>
                     <div style="font-weight: 700; font-size: 14px;">${s.name}</div>
-                    <div style="font-size: 12px; color: var(--t-muted);">ID: ${s.id} · যোগদান: ${s.joined_date || '-'}</div>
+                    <div style="font-size: 12px; color: var(--t-muted);">ID: ${s.id} · Joined: ${s.joined_date || '-'}</div>
                   </div>
                 </div>
               </td>
               <td>${roleBadge}</td>
-              <td style="font-size: 13px; font-weight: 500;">${s.bureau || 'সাধারণ ডেস্ক'}</td>
+              <td style="font-size: 13px; font-weight: 500;">${s.bureau || 'General Desk'}</td>
               <td style="font-size: 12px;">
                 <div>${s.email}</div>
                 <div style="color: var(--t-muted);">${s.phone}</div>
               </td>
               <td>${statusBadge}</td>
               <td style="text-align: right;">
-                <button onclick="toggleStaffStatus('${s.id}', '${s.status}')" class="btn btn--sm btn--ghost" style="margin-right: 4px;">
-                  ${s.status === 'active' ? 'স্থগিত' : 'সক্রিয়'}
-                </button>
-                <button onclick="deleteStaff('${s.id}')" class="btn btn--sm btn--danger">বাদ দিন</button>
+                <div style="display:inline-flex; gap:6px;">
+                  <button onclick="openEditStaffModal(${idx})" class="btn btn--sm btn--ghost" style="color:#10B981;">
+                    Edit
+                  </button>
+                  <button onclick="toggleStaffStatus('${s.id}', '${s.status}')" class="btn btn--sm btn--ghost">
+                    ${s.status === 'active' ? 'Suspend' : 'Activate'}
+                  </button>
+                  <button onclick="deleteStaff('${s.id}', this)" class="btn btn--sm btn--danger">
+                    Delete
+                  </button>
+                </div>
               </td>
             </tr>
           `;
@@ -325,28 +390,48 @@
         const query = document.getElementById('staffSearch').value.toLowerCase();
         const filtered = allStaffData.filter(s => 
           s.name.toLowerCase().includes(query) ||
-          s.bureau.toLowerCase().includes(query) ||
-          (s.role_bn && s.role_bn.toLowerCase().includes(query))
+          (s.bureau && s.bureau.toLowerCase().includes(query)) ||
+          (s.role_en && s.role_en.toLowerCase().includes(query))
         );
         renderStaffTable(filtered);
       }
 
-      function openAddModal() {
+      window.openAddModal = function() {
         document.getElementById('addStaffModal').classList.add('is-open');
-      }
+      };
 
-      function closeAddModal() {
+      window.closeAddModal = function() {
         document.getElementById('addStaffModal').classList.remove('is-open');
-      }
+      };
 
-      async function submitStaff(e) {
+      window.openEditStaffModal = function(idx) {
+        const s = allStaffData[idx];
+        if (!s) return;
+        document.getElementById('editStaffId').value = s.id;
+        document.getElementById('editStaffName').value = s.name;
+        document.getElementById('editStaffEmail').value = s.email;
+        document.getElementById('editStaffRole').value = s.role;
+        document.getElementById('editStaffBureau').value = s.bureau || '';
+        document.getElementById('editStaffPhone').value = s.phone || '';
+        document.getElementById('editStaffStatus').value = s.status || 'active';
+        document.getElementById('editStaffModal').classList.add('is-open');
+      };
+
+      window.closeEditStaffModal = function() {
+        document.getElementById('editStaffModal').classList.remove('is-open');
+      };
+
+      window.submitAddStaff = async function(e) {
         e.preventDefault();
+        const btn = document.getElementById('btnAddStaffSubmit');
+        window.setBtnLoading(btn, true, 'Adding Staff...');
+
         const payload = {
-          name: document.getElementById('staffName').value,
-          email: document.getElementById('staffEmail').value,
+          name: document.getElementById('staffName').value.trim(),
+          email: document.getElementById('staffEmail').value.trim(),
           role: document.getElementById('staffRole').value,
-          bureau: document.getElementById('staffBureau').value,
-          phone: document.getElementById('staffPhone').value
+          bureau: document.getElementById('staffBureau').value.trim(),
+          phone: document.getElementById('staffPhone').value.trim()
         };
 
         try {
@@ -357,16 +442,54 @@
           });
           const data = await res.json();
           if (data.success) {
-            alert('নতুন সংবাদকর্মী সফলভাবে যুক্ত হয়েছেন!');
+            alert('✅ New staff member added successfully!');
             closeAddModal();
             loadStaff();
           } else {
-            alert('যুক্ত করা যায়নি: ' + (data.detail || 'ত্রুটি'));
+            alert('Failed to add: ' + (data.detail || 'Error'));
           }
         } catch (err) {
-          alert('নেটওয়ার্ক ত্রুটি: ' + err);
+          alert('Network error: ' + err);
+        } finally {
+          window.setBtnLoading(btn, false);
         }
-      }
+      };
+
+      window.submitEditStaff = async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnEditStaffSubmit');
+        const staffId = document.getElementById('editStaffId').value;
+        window.setBtnLoading(btn, true, 'Saving Changes...');
+
+        const updates = {
+          name: document.getElementById('editStaffName').value.trim(),
+          email: document.getElementById('editStaffEmail').value.trim(),
+          role: document.getElementById('editStaffRole').value,
+          bureau: document.getElementById('editStaffBureau').value.trim(),
+          phone: document.getElementById('editStaffPhone').value.trim(),
+          status: document.getElementById('editStaffStatus').value
+        };
+
+        try {
+          const res = await fetch(`/api/staff/${staffId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert('✅ Staff member profile updated successfully!');
+            closeEditStaffModal();
+            loadStaff();
+          } else {
+            alert('Update failed: ' + (data.detail || 'Error'));
+          }
+        } catch (err) {
+          alert('Network error: ' + err);
+        } finally {
+          window.setBtnLoading(btn, false);
+        }
+      };
 
       window.toggleStaffStatus = async function(staffId, currentStatus) {
         const nextStatus = currentStatus === 'active' ? 'suspended' : 'active';
@@ -381,23 +504,26 @@
             loadStaff();
           }
         } catch (e) {
-          alert('স্ট্যাটাস আপডেট ব্যর্থ: ' + e);
+          alert('Status update failed: ' + e);
         }
       };
 
-      window.deleteStaff = async function(staffId) {
-        if (!confirm('আপনি কি নিশ্চিত যে এই কর্মীকে তালিকা থেকে বাদ দিতে চান?')) {
+      window.deleteStaff = async function(staffId, btn) {
+        if (!confirm('Are you sure you want to remove this staff member from the roster?')) {
           return;
         }
+        window.setBtnLoading(btn, true, 'Removing...');
         try {
           const res = await fetch(`/api/staff/${staffId}`, { method: 'DELETE' });
           const data = await res.json();
           if (data.success) {
-            alert('কর্মী সফলভাবে অপসারিত হয়েছেন।');
+            alert('Staff member removed successfully.');
             loadStaff();
           }
         } catch (e) {
-          alert('মুছতে ব্যর্থ হয়েছে: ' + e);
+          alert('Failed to delete: ' + e);
+        } finally {
+          window.setBtnLoading(btn, false);
         }
       };
 

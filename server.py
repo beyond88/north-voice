@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 import uvicorn
 
 from src.config import FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN, DRY_RUN, NORTH_BENGAL_DISTRICTS
@@ -113,7 +114,58 @@ def get_posts(limit: int = 50):
             "template": tmpl,
             "created_at": p.get("created_at", "")
         })
-    return {"posts": formatted}
+    return {
+        "posts": formatted,
+        "supabase_connected": bool(db.client is not None),
+        "total": len(formatted)
+    }
+
+@app.put("/api/posts/{url_hash}")
+def edit_existing_post(url_hash: str, payload: Dict):
+    new_headline = payload.get("headline", "").strip()
+    new_caption = payload.get("caption", "").strip()
+    new_template = payload.get("template", "breaking")
+
+    if not new_headline:
+        raise HTTPException(status_code=400, detail="Headline cannot be empty.")
+
+    fb_updated = False
+    updated_row = None
+
+    if db.client:
+        try:
+            curr = db.client.table("posts").select("*").eq("url_hash", url_hash).execute()
+            if curr.data and len(curr.data) > 0:
+                row = curr.data[0]
+                fb_pid_raw = row.get("fb_post_id", "")
+                clean_fb_id = fb_pid_raw.split("|tmpl:")[0].strip()
+                updated_stored_id = f"{clean_fb_id}|tmpl:{new_template}" if new_template else clean_fb_id
+
+                # 1. Update caption on Facebook Page feed if caption provided
+                if new_caption and clean_fb_id and clean_fb_id not in ("dry_run", "mock"):
+                    fb_updated = poster.update_post_caption(clean_fb_id, new_caption)
+
+                # 2. Update Supabase record in-place without creating duplicate
+                updates = {
+                    "headline": new_headline,
+                    "fb_post_id": updated_stored_id
+                }
+                updated_row = db.update_post_by_hash(url_hash, updates)
+
+                return {
+                    "success": True,
+                    "message": "Existing post successfully updated on Facebook and Supabase.",
+                    "fb_updated": fb_updated,
+                    "updated_row": updated_row
+                }
+        except Exception as e:
+            logger.error(f"Error updating post: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return {
+        "success": True,
+        "message": "Post updated locally (Supabase not connected)."
+    }
 
 @app.delete("/api/posts/{url_hash}")
 def delete_post(url_hash: str):
@@ -314,6 +366,110 @@ def delete_staff_member(staff_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Staff member not found.")
     return {"success": True, "message": "Staff member removed successfully."}
+
+# =========================================================================
+# 6. Authentication & User Profile API
+# =========================================================================
+@app.post("/api/auth/login")
+def login(payload: Dict):
+    email = payload.get("email", "").strip()
+    password = payload.get("password", "").strip()
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required.")
+    user = StaffManager.authenticate(email, password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+    token = f"nv_tok_{int(time.time())}_{user['id']}"
+    return {
+        "success": True,
+        "token": token,
+        "user": user,
+        "message": "Login successful"
+    }
+
+@app.put("/api/auth/profile")
+def update_profile(payload: Dict):
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="User ID is required.")
+    updates = {}
+    for k in ["name", "email", "phone", "bureau", "password", "status"]:
+        if k in payload and payload[k] is not None:
+            updates[k] = payload[k]
+    updated = StaffManager.update_staff(user_id, updates)
+    if not updated:
+        raise HTTPException(status_code=404, detail="User profile not found.")
+    safe_user = {k: v for k, v in updated.items() if k != "password"}
+    return {"success": True, "user": safe_user, "message": "Profile updated successfully."}
+
+# =========================================================================
+# 7. Database & API Environment Configuration API
+# =========================================================================
+@app.get("/api/settings/env")
+def get_env_settings():
+    from src.config import SUPABASE_URL, SUPABASE_KEY, FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN, GEMINI_API_KEY
+    def mask_key(k: str) -> str:
+        if not k:
+            return ""
+        if len(k) <= 8:
+            return "••••••••"
+        return k[:4] + "••••••••" + k[-4:]
+
+    return {
+        "supabase_url": SUPABASE_URL or "",
+        "supabase_configured": bool(SUPABASE_URL and SUPABASE_KEY and db.client is not None),
+        "supabase_key_masked": mask_key(SUPABASE_KEY),
+        "fb_page_id": FB_PAGE_ID or "",
+        "fb_configured": bool(FB_PAGE_ID and FB_PAGE_ACCESS_TOKEN and not poster.dry_run),
+        "fb_token_masked": mask_key(FB_PAGE_ACCESS_TOKEN),
+        "gemini_configured": bool(GEMINI_API_KEY),
+        "gemini_key_masked": mask_key(GEMINI_API_KEY)
+    }
+
+@app.post("/api/settings/env")
+def save_env_settings(payload: Dict):
+    global db, poster, editor
+    env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
+
+    existing = {}
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    existing[k.strip()] = v.strip()
+
+    if "supabase_url" in payload and payload["supabase_url"]:
+        existing["SUPABASE_URL"] = payload["supabase_url"].strip()
+    if "supabase_key" in payload and payload["supabase_key"] and "••••" not in payload["supabase_key"]:
+        existing["SUPABASE_KEY"] = payload["supabase_key"].strip()
+    if "fb_page_id" in payload and payload["fb_page_id"]:
+        existing["FB_PAGE_ID"] = payload["fb_page_id"].strip()
+    if "fb_page_access_token" in payload and payload["fb_page_access_token"] and "••••" not in payload["fb_page_access_token"]:
+        existing["FB_PAGE_ACCESS_TOKEN"] = payload["fb_page_access_token"].strip()
+    if "gemini_api_key" in payload and payload["gemini_api_key"] and "••••" not in payload["gemini_api_key"]:
+        existing["GEMINI_API_KEY"] = payload["gemini_api_key"].strip()
+
+    with open(env_path, "w", encoding="utf-8") as f:
+        for k, v in existing.items():
+            f.write(f"{k}={v}\n")
+
+    load_dotenv(env_path, override=True)
+    import src.config as cfg
+    cfg.SUPABASE_URL = existing.get("SUPABASE_URL", "")
+    cfg.SUPABASE_KEY = existing.get("SUPABASE_KEY", "")
+    cfg.FB_PAGE_ID = existing.get("FB_PAGE_ID", "")
+    cfg.FB_PAGE_ACCESS_TOKEN = existing.get("FB_PAGE_ACCESS_TOKEN", "")
+    cfg.GEMINI_API_KEY = existing.get("GEMINI_API_KEY", "")
+    cfg.DRY_RUN = not bool(cfg.FB_PAGE_ACCESS_TOKEN)
+
+    if cfg.SUPABASE_URL and cfg.SUPABASE_KEY:
+        db.reconnect(cfg.SUPABASE_URL, cfg.SUPABASE_KEY)
+    poster = FacebookPoster()
+    editor = AIEditor()
+
+    return {"success": True, "message": "Environment settings saved and services updated successfully."}
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
