@@ -235,11 +235,13 @@ class CardGenerator:
 
         if is_intl:
             category_or_district = "আন্তর্জাতিক"
+            district_val = "আন্তর্জাতিক"
         elif subhead_val in ("সর্বশেষ আপডেট", "তদন্ত ও পদক্ষেপ", "আইনি পদক্ষেপ"):
             category_or_district = subhead_val
         elif news_data.get("is_viral") or template_name == "viral":
             if not district_val or district_val in ("বাংলাদেশ", "সারা দেশ", "জাতীয়"):
                 category_or_district = "সারা দেশ"
+                district_val = "সারা দেশ"
             else:
                 category_or_district = district_val
         else:

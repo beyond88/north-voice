@@ -1,7 +1,9 @@
 import re
+import os
 import difflib
 import hashlib
 import logging
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 from supabase import create_client, Client
 from src.config import SUPABASE_URL, SUPABASE_KEY
@@ -106,8 +108,77 @@ class Database:
             logger.debug(f"Could not fetch recent headlines from Supabase: {e}")
             return []
 
-    def save_post(self, news_url: str, headline: str, fb_post_id: str = "dry_run") -> bool:
-        """Records a successful post in Supabase."""
+    def get_last_template(self) -> Optional[str]:
+        """
+        Retrieves the template used in the most recently published post.
+        Checks Supabase first, with a fallback to local cache.
+        """
+        if self.client:
+            try:
+                res = self.client.table("posts").select("fb_post_id").order("created_at", desc=True).limit(5).execute()
+                if res.data:
+                    for row in res.data:
+                        fb_pid = row.get("fb_post_id", "")
+                        if fb_pid and "|tmpl:" in fb_pid:
+                            tmpl = fb_pid.split("|tmpl:", 1)[1].strip()
+                            if tmpl:
+                                return tmpl
+            except Exception as e:
+                logger.debug(f"Could not fetch last template from Supabase: {e}")
+
+        # Local fallback cache
+        if os.path.exists(".last_template"):
+            try:
+                with open(".last_template", "r", encoding="utf-8") as f:
+                    cached_tmpl = f.read().strip()
+                    if cached_tmpl:
+                        return cached_tmpl
+            except Exception:
+                pass
+        return None
+
+    def get_minutes_since_last_post(self) -> Optional[float]:
+        """
+        Returns how many minutes have elapsed since the last post was created.
+        Used to enforce safe pacing intervals (minimum 25-30 min) to avoid Facebook spam detection.
+        """
+        if self.client:
+            try:
+                res = self.client.table("posts").select("created_at").order("created_at", desc=True).limit(1).execute()
+                if res.data and res.data[0].get("created_at"):
+                    created_at_str = res.data[0]["created_at"].replace("Z", "+00:00")
+                    last_dt = datetime.fromisoformat(created_at_str)
+                    now_dt = datetime.now(timezone.utc)
+                    elapsed_minutes = (now_dt - last_dt).total_seconds() / 60.0
+                    return elapsed_minutes
+            except Exception as e:
+                logger.debug(f"Could not compute minutes since last post from Supabase: {e}")
+
+        # Local fallback
+        if os.path.exists(".last_posted_time"):
+            try:
+                with open(".last_posted_time", "r", encoding="utf-8") as f:
+                    ts = float(f.read().strip())
+                    elapsed = (datetime.now(timezone.utc).timestamp() - ts) / 60.0
+                    return elapsed
+            except Exception:
+                pass
+        return None
+
+    def save_post(self, news_url: str, headline: str, fb_post_id: str = "dry_run", template: Optional[str] = None) -> bool:
+        """Records a successful post in Supabase with template metadata and local fallback cache."""
+        stored_post_id = f"{fb_post_id}|tmpl:{template}" if template else fb_post_id
+
+        # Update local caches
+        try:
+            if template:
+                with open(".last_template", "w", encoding="utf-8") as f:
+                    f.write(template)
+            with open(".last_posted_time", "w", encoding="utf-8") as f:
+                f.write(str(datetime.now(timezone.utc).timestamp()))
+        except Exception:
+            pass
+
         if not self.client:
             return False
 
@@ -117,9 +188,9 @@ class Database:
                 "url_hash": url_hash,
                 "news_url": news_url,
                 "headline": headline,
-                "fb_post_id": fb_post_id
+                "fb_post_id": stored_post_id
             }).execute()
-            logger.info(f"Saved post signature to Supabase: {url_hash[:10]}...")
+            logger.info(f"Saved post signature to Supabase: {url_hash[:10]}... (Template: {template or 'default'})")
             return True
         except Exception as e:
             err_dict = getattr(e, 'args', [{}])[0] if hasattr(e, 'args') and len(e.args) > 0 else {}

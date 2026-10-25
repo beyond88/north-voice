@@ -137,7 +137,7 @@
       <div class="brand-title">NORTH <span>VOICE</span></div>
     </div>
     {% if district %}
-    <div class="district-badge">{{ district }} বার্তা</div>
+    <div class="district-badge">{% if district in ['আন্তর্জাতিক', 'সারা দেশ'] %}{{ district }}{% else %}{{ district }} বার্তা{% endif %}</div>
     {% endif %}
   </div>
 

@@ -196,7 +196,7 @@
     <div class="badge-container">
       <div class="live-pill">সদ্য প্রাপ্ত</div>
       {% if district %}
-      <div class="district-pill">{{ district }} বার্তা</div>
+      <div class="district-pill">{% if district in ['আন্তর্জাতিক', 'সারা দেশ'] %}{{ district }}{% else %}{{ district }} বার্তা{% endif %}</div>
       {% endif %}
     </div>
   </div>
