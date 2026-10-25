@@ -108,6 +108,34 @@ class Database:
             logger.debug(f"Could not fetch recent headlines from Supabase: {e}")
             return []
 
+    def get_all_posts(self, limit: int = 100) -> list:
+        """Fetches detailed published post records for the Admin Dashboard."""
+        if not self.client:
+            return []
+        try:
+            res = self.client.table("posts").select("*").order("created_at", desc=True).limit(limit).execute()
+            return res.data if res.data else []
+        except Exception as e:
+            logger.error(f"Error fetching all posts from Supabase: {e}")
+            return []
+
+    def delete_post_by_hash(self, url_hash: str) -> Optional[dict]:
+        """Deletes a post record from Supabase table 'posts' by url_hash and returns deleted row."""
+        if not self.client:
+            return None
+        try:
+            # First fetch the row to get fb_post_id
+            row_res = self.client.table("posts").select("*").eq("url_hash", url_hash).execute()
+            row_data = row_res.data[0] if row_res.data else None
+
+            # Delete the record
+            self.client.table("posts").delete().eq("url_hash", url_hash).execute()
+            logger.info(f"Deleted post record from Supabase: {url_hash[:10]}...")
+            return row_data
+        except Exception as e:
+            logger.error(f"Failed to delete post from Supabase: {e}")
+            return None
+
     def get_last_template(self) -> Optional[str]:
         """
         Retrieves the template used in the most recently published post.

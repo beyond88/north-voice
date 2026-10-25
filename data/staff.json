@@ -1,0 +1,110 @@
+[
+  {
+    "id": "stf_001",
+    "name": "মুহিউদ্দীন আব্দুল কাদের",
+    "role": "editor_in_chief",
+    "role_bn": "প্রধান সম্পাদক",
+    "email": "editor@northvoice.com",
+    "phone": "+880 1700-000001",
+    "bureau": "কেন্দ্রীয় বার্তা বিভাগ",
+    "status": "active",
+    "avatar_initials": "এমএ",
+    "joined_date": "২০২৪-০১-০১",
+    "permissions": [
+      "all",
+      "manage_staff",
+      "publish_instant",
+      "delete_posts",
+      "edit_prompts",
+      "system_settings"
+    ]
+  },
+  {
+    "id": "stf_002",
+    "name": "রফিকুল হাসান",
+    "role": "news_editor",
+    "role_bn": "বার্তা সম্পাদক",
+    "email": "news@northvoice.com",
+    "phone": "+880 1711-223344",
+    "bureau": "জাতীয় ও আন্তর্জাতিক ডেস্ক",
+    "status": "active",
+    "avatar_initials": "আরএইচ",
+    "joined_date": "২০২৪-০৩-১৫",
+    "permissions": [
+      "publish_instant",
+      "delete_posts",
+      "edit_news",
+      "scan_feeds",
+      "view_analytics"
+    ]
+  },
+  {
+    "id": "stf_003",
+    "name": "তানিয়া সুলতানা",
+    "role": "sub_editor",
+    "role_bn": "সহ-সম্পাদক (শিফট ইনচার্জ)",
+    "email": "desk@northvoice.com",
+    "phone": "+880 1819-334455",
+    "bureau": "উত্তরবঙ্গ শিফট ডেস্ক",
+    "status": "active",
+    "avatar_initials": "টিএস",
+    "joined_date": "২০২৪-০৬-০১",
+    "permissions": [
+      "scan_feeds",
+      "draft_posts",
+      "edit_news",
+      "preview_cards"
+    ]
+  },
+  {
+    "id": "stf_004",
+    "name": "মাহমুদুর রহমান",
+    "role": "reporter",
+    "role_bn": "নিজস্ব প্রতিবেদক",
+    "email": "bogra@northvoice.com",
+    "phone": "+880 1912-556677",
+    "bureau": "বগুড়া ও সিরাজগঞ্জ ব্যুরো",
+    "status": "active",
+    "avatar_initials": "এমআর",
+    "joined_date": "২০২৪-০৮-১০",
+    "permissions": [
+      "submit_news",
+      "upload_photos",
+      "draft_posts"
+    ]
+  },
+  {
+    "id": "stf_005",
+    "name": "জাহাঙ্গীর আলম",
+    "role": "reporter",
+    "role_bn": "জেলা প্রতিনিধি",
+    "email": "rangpur@northvoice.com",
+    "phone": "+880 1515-778899",
+    "bureau": "রংপুর ও কুড়িগ্রাম ব্যুরো",
+    "status": "active",
+    "avatar_initials": "জেএ",
+    "joined_date": "২০২৪-০৯-০৫",
+    "permissions": [
+      "submit_news",
+      "upload_photos",
+      "draft_posts"
+    ]
+  },
+  {
+    "id": "stf_006",
+    "name": "আরিফুল ইসলাম",
+    "role": "social_media_manager",
+    "role_bn": "সোশ্যাল মিডিয়া এক্সিকিউটিভ",
+    "email": "social@northvoice.com",
+    "phone": "+880 1618-990011",
+    "bureau": "সোশ্যাল মিডিয়া ও ডিস্ট্রিবিউশন",
+    "status": "active",
+    "avatar_initials": "এআই",
+    "joined_date": "২০২৪-১০-০১",
+    "permissions": [
+      "view_analytics",
+      "monitor_spam",
+      "view_posts"
+    ]
+  }
+]

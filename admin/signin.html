@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>North Voice · বার্তা কক্ষ সাইন ইন</title>
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('dash26-theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="auth-shell">
+      <aside class="auth-aside">
+        <div class="auth-brand">
+          <div class="logo" style="background:#EF4444; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px;">
+            <svg viewBox="0 0 36 36" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#ffffff" d="M10 26V10h3.5l8.5 11.5V10h4v16h-3.5L14 14.5V26h-4z"/>
+            </svg>
+          </div>
+          <div class="name" style="font-weight:900;">NORTH VOICE</div>
+        </div>
+        <div class="auth-aside-body">
+          <span class="auth-aside-eyebrow">উত্তরবঙ্গ সংবাদ ডেস্ক · v2.0</span>
+          <h1>উত্তরবঙ্গের প্রতিটি জনপদের বলিষ্ঠ কণ্ঠস্বর।</h1>
+          <p>১৬ জেলা ও ১২৫ উপজেলার রিয়েল-টাইম সংবাদ স্ক্যানার, ৫টি প্রিমিয়াম ফটোকার্ড ইঞ্জিন এবং ফেসবুক পাবলিশিং সিস্টেম।</p>
+          <div class="auth-quote">
+            "দায়িত্বশীল সাংবাদিকতা ও আধুনিক প্রযুক্তির সমন্বয়ে উত্তরবঙ্গের প্রথম এআই-পাওয়ার্ড স্বয়ংক্রিয় সংবাদ মাধ্যম।"
+            <div class="auth-quote-author">
+              <div class="av" style="background:#EF4444; color:#fff;">এমএ</div>
+              <div>মুহিউদ্দীন কাদের · প্রধান সম্পাদক</div>
+            </div>
+          </div>
+        </div>
+        <div class="auth-aside-footer">
+          <span>© ২০২৬ North Voice Newsroom</span>
+          <span>সব অধিকার সংরক্ষিত</span>
+        </div>
+      </aside>
+      <main class="auth-main">
+        <div class="auth-main-top">
+          <a href="index.html" style="font-size: 12.5px; color: var(--t-muted); display: inline-flex; align-items: center; gap: 6px;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            ড্যাশবোর্ডে ফিরুন
+          </a>
+        </div>
+
+        <div class="auth-card">
+          <h2>বার্তা কক্ষে লগইন</h2>
+          <p class="sub">সম্পাদকীয় ড্যাশবোর্ডে প্রবেশ করতে আপনার অফিশিয়াল ক্রেডেনশিয়াল ব্যবহার করুন।</p>
+
+          <form class="auth-form" onsubmit="event.preventDefault(); window.location='index.html';">
+            <div class="field">
+              <label class="field-label" for="email">অফিশিয়াল ইমেইল (Email)</label>
+              <div class="input-icon">
+                <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+                <input id="email" class="input" type="email" value="editor@northvoice.com" required>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <label class="field-label" for="password">পাসওয়ার্ড (Password)</label>
+              </div>
+              <div class="input-icon">
+                <span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                <input id="password" class="input" type="password" value="••••••••" required>
+              </div>
+            </div>
+
+            <button class="btn btn--primary auth-submit" type="submit" style="margin-top:14px;">
+              লগইন করুন
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

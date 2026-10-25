@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>North Voice · লাইভ নিউজ হান্টার ও তাৎক্ষণিক প্রকাশ</title>
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('dash26-theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.setAttribute('data-theme', saved || (prefersDark ? 'dark' : 'light'));
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+    <style>
+      .candidate-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .candidate-card {
+        background: var(--bg-surface, #ffffff);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .candidate-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      }
+      .candidate-img-wrap {
+        width: 100%;
+        height: 200px;
+        background: #1e293b;
+        position: relative;
+        overflow: hidden;
+      }
+      .candidate-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .candidate-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #E50914;
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .candidate-score {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.75);
+        color: #FACC15;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: monospace;
+      }
+      .candidate-body {
+        padding: 16px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .candidate-title {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.45;
+        margin-bottom: 8px;
+      }
+      .candidate-summary {
+        font-size: 12.5px;
+        color: var(--t-muted);
+        line-height: 1.5;
+        margin-bottom: 14px;
+      }
+      .candidate-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border);
+        padding-top: 12px;
+        margin-top: 8px;
+      }
+
+      /* Preview Modal */
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.75);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-backdrop.is-open { display: flex; }
+      .modal-card {
+        background: var(--bg-surface, #ffffff);
+        border-radius: 12px;
+        max-width: 650px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 24px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+      }
+    </style>
+  </head>
+  <body data-active="news-hunter" data-crumbs="সংবাদ ব্যবস্থাপনা | লাইভ নিউজ হান্টার">
+    <div class="shell">
+      <div data-shell-sidebar></div>
+      <div class="main">
+        <div data-shell-topbar></div>
+        <main class="content">
+
+        <!-- HERO -->
+        <section class="hero">
+          <div class="hero-text">
+            <span class="eyebrow">৪৩টি জাতীয় ও আঞ্চলিক মাস্টার ফিড স্ক্যানার</span>
+            <h1 class="hero-title">লাইভ নিউজ হান্টার ও <span class="accent">তাৎক্ষণিক প্রকাশ</span></h1>
+            <p class="hero-sub">সারাদেশ ও উত্তরবঙ্গের তাজা সংবাদ মুহূর্তের মধ্যে খুঁজে বের করে ফটোকার্ড প্রিভিউ ও ফেসবুকে সরাসরি পোস্ট করুন।</p>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn--primary" id="btnScanNow" onclick="scanFeeds()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              তাজা সংবাদ স্ক্যান করুন
+            </button>
+          </div>
+        </section>
+
+        <!-- SEARCH BAR & FILTER -->
+        <div class="card" style="padding: 20px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <div style="flex: 1; min-width: 250px;">
+              <input type="text" id="queryInput" class="input" placeholder="কি-ওয়ার্ড দিয়ে খুঁজুন (যেমন: তিস্তা, দুর্ঘটনা, নির্বাচন, ভাইরাল)..." onkeydown="if(event.key==='Enter') scanFeeds()">
+            </div>
+            <div style="min-width: 160px;">
+              <select id="districtFilter" class="input">
+                <option value="সব জেলা">সব জেলা / অঞ্চল</option>
+                <option value="আন্তর্জাতিক">আন্তর্জাতিক (Global)</option>
+                <option value="সারা দেশ">সারা দেশ (Viral BD)</option>
+                <option value="বগুড়া">বগুড়া</option>
+                <option value="রংপুর">রংপুর</option>
+                <option value="দিনাজপুর">দিনাজপুর</option>
+                <option value="সিরাজগঞ্জ">সিরাজগঞ্জ</option>
+                <option value="পাবনা">পাবনা</option>
+                <option value="নওগাঁ">নওগাঁ</option>
+                <option value="নাটোর">নাটোর</option>
+                <option value="কুড়িগ্রাম">কুড়িগ্রাম</option>
+                <option value="গাইবান্ধা">গাইবান্ধা</option>
+                <option value="নীলফামারী">নীলফামারী</option>
+                <option value="পঞ্চগড়">পঞ্চগড়</option>
+                <option value="ঠাকুরগাঁও">ঠাকুরগাঁও</option>
+                <option value="লালমনিরহাট">লালমনিরহাট</option>
+                <option value="রাজশাহী">রাজশাহী</option>
+                <option value="জয়পুরহাট">জয়পুরহাট</option>
+                <option value="চাঁপাইনবাবগঞ্জ">চাঁপাইনবাবগঞ্জ</option>
+              </select>
+            </div>
+            <label class="check" style="margin-left: 6px;">
+              <input type="checkbox" id="viralToggle">
+              <span class="box"></span>
+              শুধুমাত্র ভাইরাল ও ট্রেন্ডিং
+            </label>
+            <button class="btn btn--primary" onclick="scanFeeds()">সার্চ করুন</button>
+          </div>
+        </div>
+
+        <!-- CANDIDATES RESULT GRID -->
+        <div id="loadingStatus" style="display: none; text-align: center; padding: 50px;">
+          <div style="font-size: 16px; font-weight: 700;">📡 দেশের ৪৩টি মাস্টার নিউজ ফিড স্ক্যান করা হচ্ছে...</div>
+          <div style="font-size: 13px; color: var(--t-muted); margin-top: 8px;">অনুগ্রহ করে কয়েক সেকেন্ড অপেক্ষা করুন।</div>
+        </div>
+
+        <div class="candidate-grid" id="candidateGrid">
+          <!-- Dynamically populated -->
+        </div>
+
+        </main>
+        <div data-shell-footer></div>
+      </div>
+    </div>
+
+    <!-- PREVIEW MODAL -->
+    <div class="modal-backdrop" id="previewModal">
+      <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h3 style="margin: 0; font-size: 18px; font-weight: 700;">ফটোকার্ড লাইভ প্রিভিউ</h3>
+          <button onclick="closePreviewModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--t-muted);">✕</button>
+        </div>
+        <div id="previewImgContainer" style="text-align: center; background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; min-height: 300px; display: flex; align-items: center; justify-content: center;">
+          <span style="color: #cbd5e1;">রেন্ডার হচ্ছে...</span>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button class="btn btn--ghost" onclick="closePreviewModal()">বন্ধ করুন</button>
+          <button class="btn btn--primary" id="btnPublishFromPreview">ফেসবুকে পাবলিশ করুন 🚀</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="assets/js/index.js"></script>
+    <script>
+      let currentCandidates = [];
+      let activeCandidate = null;
+
+      async function scanFeeds() {
+        const q = document.getElementById('queryInput').value;
+        const dist = document.getElementById('districtFilter').value;
+        const viral = document.getElementById('viralToggle').checked;
+
+        const grid = document.getElementById('candidateGrid');
+        const loader = document.getElementById('loadingStatus');
+
+        grid.innerHTML = '';
+        loader.style.display = 'block';
+
+        try {
+          const params = new URLSearchParams();
+          if (q) params.append('q', q);
+          if (dist) params.append('district', dist);
+          if (viral) params.append('viral_only', 'true');
+
+          const res = await fetch(`/api/news/hunt?${params.toString()}`);
+          const data = await res.json();
+          currentCandidates = data.candidates || [];
+
+          loader.style.display = 'none';
+
+          if (currentCandidates.length === 0) {
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 50px; color: var(--t-muted);">কোনো সংবাদ পাওয়া যায়নি। অনুগ্রহ করে অন্য কি-ওয়ার্ড বা জেলা দিয়ে খুঁজুন।</div>';
+            return;
+          }
+
+          renderCandidates(currentCandidates);
+        } catch (e) {
+          loader.style.display = 'none';
+          alert('সংবাদ স্ক্যান ব্যর্থ হয়েছে: ' + e);
+        }
+      }
+
+      function renderCandidates(candidates) {
+        const grid = document.getElementById('candidateGrid');
+        grid.innerHTML = candidates.map((c, idx) => {
+          const imgUrl = c.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600';
+          const badgeText = c.is_international ? 'আন্তর্জাতিক' : (c.is_viral ? 'ভাইরাল' : (c.upazila ? `${c.upazila}, ${c.district}` : c.district));
+
+          return `
+            <div class="candidate-card">
+              <div class="candidate-img-wrap">
+                <img src="${imgUrl}" class="candidate-img" alt="Photo" onerror="this.src='https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600'">
+                <div class="candidate-badge">${badgeText}</div>
+                <div class="candidate-score">Reach: ${c.reach_score.toFixed(0)}</div>
+              </div>
+              <div class="candidate-body">
+                <div>
+                  <div class="candidate-title">${c.title}</div>
+                  <div class="candidate-summary">${c.summary}</div>
+                </div>
+                <div class="candidate-footer">
+                  <span style="font-size: 12px; color: var(--t-muted); font-weight: 600;">সূত্র: ${c.source}</span>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn--sm btn--ghost" onclick="openPreview(${idx})">প্রিভিউ</button>
+                    <button class="btn btn--sm btn--primary" onclick="instantPublish(${idx})">পোস্ট করুন 🚀</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      window.openPreview = async function(idx) {
+        activeCandidate = currentCandidates[idx];
+        const modal = document.getElementById('previewModal');
+        const container = document.getElementById('previewImgContainer');
+        modal.classList.add('is-open');
+        container.innerHTML = '<span style="color: #cbd5e1;">ফটোকার্ড রেন্ডার হচ্ছে, কয়েক সেকেন্ড অপেক্ষা করুন...</span>';
+
+        document.getElementById('btnPublishFromPreview').onclick = () => instantPublish(idx);
+
+        try {
+          const res = await fetch('/api/news/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(activeCandidate)
+          });
+          const data = await res.json();
+          if (data.success && data.image_uri) {
+            container.innerHTML = `<img src="${data.image_uri}" style="max-height: 500px; width: auto; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);" alt="Card Preview">`;
+          } else {
+            container.innerHTML = `<span style="color: #EF4444;">প্রিভিউ ব্যর্থ হয়েছে: ${data.detail || 'ত্রুটি'}</span>`;
+          }
+        } catch (e) {
+          container.innerHTML = `<span style="color: #EF4444;">প্রিভিউ এরর: ${e}</span>`;
+        }
+      };
+
+      window.closePreviewModal = function() {
+        document.getElementById('previewModal').classList.remove('is-open');
+      };
+
+      window.instantPublish = async function(idx) {
+        const item = currentCandidates[idx];
+        if (!confirm(`আপনি কি নিশ্চিত যে নিচের সংবাদটি ফেসবুকে প্রকাশ করতে চান?\n\n"${item.title}"`)) {
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/news/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert(`✅ অভিনন্দন! সংবাদটি সফলভাবে ফেসবুকে প্রকাশিত হয়েছে!\n\nপোস্ট আইডি: ${data.fb_post_id}\nব্যবহৃত টেমপ্লেট: ${data.template}\nস্প্যাম স্কোর: ${data.spam_score}/১০০ (নিরাপদ)`);
+            closePreviewModal();
+          } else {
+            alert('পোস্ট প্রকাশ ব্যর্থ হয়েছে: ' + (data.detail || 'ত্রুটি'));
+          }
+        } catch (err) {
+          alert('নেটওয়ার্ক ত্রুটি: ' + err);
+        }
+      };
+
+      // Initial scan
+      scanFeeds();
+    </script>
+  </body>
+</html>

@@ -110,3 +110,30 @@ class FacebookPoster:
         except Exception as e:
             logger.warning(f"Failed to post first comment on post {post_id}: {e}")
             return False
+
+    def delete_post(self, post_id: str) -> bool:
+        """
+        Deletes a published post from the Facebook Page Feed via Graph API.
+        """
+        if self.dry_run:
+            logger.info(f"[DRY-RUN DELETE] Post ID: {post_id}")
+            return True
+
+        if not post_id or post_id in ("dry_run", "mock"):
+            return True
+
+        clean_post_id = post_id.split("|tmpl:")[0].strip()
+        url = f"https://graph.facebook.com/v20.0/{clean_post_id}"
+        params = {"access_token": self.access_token}
+        try:
+            res = requests.delete(url, params=params, timeout=20)
+            data = res.json()
+            if res.status_code == 200 and data.get("success", False):
+                logger.info(f"✅ Successfully deleted post {clean_post_id} from Facebook Page Feed.")
+                return True
+            else:
+                logger.warning(f"Could not delete post {clean_post_id} from Facebook: {data}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to delete post {clean_post_id} from Facebook: {e}")
+            return False
