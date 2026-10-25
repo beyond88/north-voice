@@ -106,6 +106,11 @@ class CardGenerator:
 
     def download_image(self, url: str, output_path: str) -> bool:
         """Downloads external news image with proper user-agent headers."""
+        from src.news_hunter import is_valid_image_url
+        if not is_valid_image_url(url):
+            logger.warning(f"Rejecting invalid/search-engine/logo image URL: {url}")
+            return False
+
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
@@ -124,15 +129,31 @@ class CardGenerator:
     @staticmethod
     def is_stock_or_white_graphic(image_path: str) -> bool:
         """
-        Detects whether an image is a generic stock illustration, clipart, or has a stark white background
-        (such as newspaper arrest/handcuffs graphics, court gavel clipart, generic question mark, etc.).
+        Detects whether an image is a generic stock illustration, clipart, flat logo,
+        or has a stark white background (such as newspaper arrest/handcuffs graphics, 
+        Google logo, court gavel clipart, etc.).
         """
         try:
             from PIL import Image
+            from collections import Counter
             with Image.open(image_path) as im:
                 w, h = im.size
                 if w < 250 or h < 180:
                     return True
+
+                # Check for flat vector graphics / search engine logos (high solid color ratio)
+                im_rgb = im.convert('RGB')
+                thumb_rgb = im_rgb.resize((50, 50))
+                try:
+                    rgb_pixels = list(thumb_rgb.get_flattened_data())
+                except AttributeError:
+                    rgb_pixels = list(thumb_rgb.getdata())
+                counts = Counter(rgb_pixels)
+                most_common_ratio = counts.most_common(1)[0][1] / len(rgb_pixels)
+                if most_common_ratio > 0.40:
+                    logger.info(f"Rejected flat logo / graphic (solid color ratio {most_common_ratio:.2f} > 0.40)")
+                    return True
+
                 im_gray = im.convert('L')
                 
                 # Check corners for pure white / flat illustration background

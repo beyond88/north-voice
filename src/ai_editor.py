@@ -78,8 +78,19 @@ class AIEditor:
 
         return "\n\n".join(paragraphs)
 
-    def fallback_analyze(self, title: str, summary: str, source: str, district: str, upazila: Optional[str] = None, is_viral: bool = False) -> Dict:
+    def fallback_analyze(self, title: str, summary: str, source: str, district: str, upazila: Optional[str] = None, is_viral: bool = False, recent_headlines: Optional[list] = None) -> Dict:
         """Intelligently routes news to templates without emojis/icons in clean journalistic style."""
+        # Enforce multi-stage deduplication even in fallback editor
+        if recent_headlines:
+            from src.db import is_duplicate_story
+            is_dup, dup_reason = is_duplicate_story(title, summary, recent_headlines)
+            if is_dup:
+                logger.info(f"Fallback Editor rejected candidate: {dup_reason}")
+                return {
+                    "is_relevant": False,
+                    "reason": dup_reason
+                }
+
         full_text = f"{title} {summary}"
         loc_display = f"{upazila}, {district}" if upazila else district
         subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
@@ -151,7 +162,7 @@ class AIEditor:
         loc_display = f"{upazila}, {district}" if upazila else district
 
         if not self.client:
-            return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral)
+            return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, recent_headlines=recent_headlines)
 
         recent_headlines_block = ""
         if recent_headlines:
@@ -236,38 +247,38 @@ class AIEditor:
 }}
 """
 
-        max_retries = 3
+        models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash"]
         last_error = None
 
-        for attempt in range(max_retries):
-            try:
-                response = self.client.models.generate_content(
-                    model="gemini-3.8-flash",
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.7  # High temperature ensures human-like burstiness, rich vocabulary, and eliminates AI patterns
+        for model_name in models_to_try:
+            for attempt in range(2):
+                try:
+                    response = self.client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            temperature=0.7
+                        )
                     )
-                )
-                raw_text = response.text.strip()
-                if raw_text.startswith("```"):
-                    lines = raw_text.splitlines()
-                    if lines[0].startswith("```"):
-                        lines = lines[1:]
-                    if lines and lines[-1].startswith("```"):
-                        lines = lines[:-1]
-                    raw_text = "\n".join(lines).strip()
+                    raw_text = response.text.strip()
+                    if raw_text.startswith("```"):
+                        lines = raw_text.splitlines()
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines and lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        raw_text = "\n".join(lines).strip()
 
-                data = json.loads(raw_text)
-                if "fb_caption" in data and data["fb_caption"]:
-                    data["fb_caption"] = clean_fb_caption(data["fb_caption"])
-                logger.info(f"AI Editor successfully drafted humanized news using template: '{data.get('template')}' for '{title[:30]}...'")
-                return data
-            except Exception as e:
-                logger.warning(f"Gemini API attempt {attempt+1}/{max_retries} failed: {e}")
-                last_error = e
-                if attempt < max_retries - 1:
-                    time.sleep(2 * (attempt + 1))
+                    data = json.loads(raw_text)
+                    if "fb_caption" in data and data["fb_caption"]:
+                        data["fb_caption"] = clean_fb_caption(data["fb_caption"])
+                    logger.info(f"AI Editor ({model_name}) successfully drafted news using template: '{data.get('template')}' for '{title[:30]}...'")
+                    return data
+                except Exception as e:
+                    logger.warning(f"Gemini API ({model_name}, attempt {attempt+1}) failed: {e}")
+                    last_error = e
+                    time.sleep(2)
 
-        logger.error(f"All Gemini retries failed. Last error: {last_error}. Using fallback editor.")
-        return self.fallback_analyze(title, summary, source, district, upazila)
+        logger.error(f"All Gemini models failed. Last error: {last_error}. Using fallback editor.")
+        return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, recent_headlines=recent_headlines)

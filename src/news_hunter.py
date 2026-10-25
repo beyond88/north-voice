@@ -11,6 +11,19 @@ from src.config import RSS_FEEDS, NORTH_BENGAL_DISTRICTS, NORTH_BENGAL_UPAZILAS
 
 logger = logging.getLogger(__name__)
 
+def is_valid_image_url(url: Optional[str]) -> bool:
+    """Verifies that an image URL is a real photograph and not a search engine icon, site logo, or placeholder."""
+    if not url or not isinstance(url, str) or not url.startswith("http"):
+        return False
+    u = url.lower()
+    invalid_patterns = [
+        "googleusercontent.com", "news.google.com", "gstatic.com", "google.com",
+        "default", "placeholder", "blank", "facebook-share", "favicon", "app-icon",
+        "site-logo", "brand-logo", "fallback", "avatar", "profile", "handcuff",
+        "vector", "clipart", "illustration", "svg"
+    ]
+    return not any(pat in u for pat in invalid_patterns)
+
 class NewsHunter:
     def __init__(self):
         self.districts = NORTH_BENGAL_DISTRICTS
@@ -34,25 +47,28 @@ class NewsHunter:
         # 1. Media content
         if "media_content" in entry and entry["media_content"]:
             for media in entry["media_content"]:
-                if "url" in media:
+                if "url" in media and is_valid_image_url(media["url"]):
                     return media["url"]
 
         # 2. Enclosures
         if "enclosures" in entry and entry["enclosures"]:
             for enc in entry["enclosures"]:
-                if "href" in enc and ("image" in enc.get("type", "") or enc.get("href", "").endswith((".jpg", ".png", ".jpeg", ".webp"))):
-                    return enc["href"]
+                href = enc.get("href", "")
+                if href and is_valid_image_url(href) and ("image" in enc.get("type", "") or href.endswith((".jpg", ".png", ".jpeg", ".webp"))):
+                    return href
 
         # 3. Media thumbnail
         if "media_thumbnail" in entry and entry["media_thumbnail"]:
-            return entry["media_thumbnail"][0].get("url")
+            thumb_url = entry["media_thumbnail"][0].get("url")
+            if is_valid_image_url(thumb_url):
+                return thumb_url
 
         # 4. Search within HTML summary / description
         summary = entry.get("summary", "") or entry.get("description", "")
         if summary:
             soup = BeautifulSoup(summary, "html.parser")
             img = soup.find("img")
-            if img and img.get("src"):
+            if img and img.get("src") and is_valid_image_url(img["src"]):
                 return img["src"]
 
         return None
@@ -72,11 +88,44 @@ class NewsHunter:
                     tag = soup.find("meta", property=prop) or soup.find("meta", attrs={"name": prop})
                     if tag and tag.get("content"):
                         img = tag["content"].strip()
-                        if img.startswith("http") and not any(bad in img.lower() for bad in ["default", "placeholder", "blank", "facebook-share"]):
+                        if is_valid_image_url(img):
                             return img
         except Exception as e:
             logger.debug(f"Could not fetch og:image from {url}: {e}")
         return None
+
+    def resolve_article_meta(self, url: str) -> Tuple[str, Optional[str]]:
+        """
+        Resolves the true destination URL and real authentic news image.
+        For Google News redirect links, uses Playwright to follow client-side redirects to destination publisher.
+        Returns (resolved_url, og_image_url).
+        """
+        if not url:
+            return url, None
+            
+        if "news.google.com" in url:
+            try:
+                from playwright.sync_api import sync_playwright
+                with sync_playwright() as p:
+                    browser = p.chromium.launch(headless=True)
+                    page = browser.new_page()
+                    page.goto(url, timeout=12000)
+                    page.wait_for_timeout(1500)
+                    resolved_url = page.url
+                    og_img = None
+                    og_tag = page.locator("meta[property=\"og:image\"], meta[property=\"og:image:url\"], meta[name=\"twitter:image\"]").first
+                    if og_tag.count() > 0:
+                        raw_img = og_tag.get_attribute("content")
+                        if is_valid_image_url(raw_img):
+                            og_img = raw_img
+                    browser.close()
+                    return resolved_url, og_img
+            except Exception as e:
+                logger.debug(f"Could not resolve Google News url via Playwright: {e}")
+                
+        # Default requests-based resolution
+        og_img = self.fetch_og_image(url)
+        return url, og_img
 
     AMBIGUOUS_UPAZILAS = {
         "বিরল": ["দিনাজপুর", "উপজেলা", "থানা"],

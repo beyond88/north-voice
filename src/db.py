@@ -1,10 +1,66 @@
+import re
+import difflib
 import hashlib
 import logging
-from typing import Optional
+from typing import Optional, Tuple
 from supabase import create_client, Client
 from src.config import SUPABASE_URL, SUPABASE_KEY
 
 logger = logging.getLogger(__name__)
+
+def extract_story_tokens(text: str) -> set:
+    if not text:
+        return set()
+    clean = re.sub(r"<[^>]+>", " ", text)
+    clean = re.sub(r"\s*-\s*[^-]+$", "", clean)
+    clean = clean.replace("হাড়", "হাড়").replace("ভাঙল", "ভেঙে").replace("স্ত্রী", "স্ত্রীর").replace("আটক", "গ্রেপ্তার")
+    words = re.findall(r"[\u0980-\u09FFa-zA-Z0-9]+", clean.lower())
+    stopwords = {
+        "ও", "এবং", "বা", "সহ", "১", "২", "৩", "৪", "৫", "ভিডিও", "ভাইরাল", 
+        "এক", "এই", "সেই", "নিয়ে", "পর", "হলো", "হলে", "থেকে", "করে", 
+        "হয়েছে", "বার্তা", "সংবাদ", "খবর", "উত্তরবঙ্গ", "সারা", "দেশ"
+    }
+    return {w for w in words if w not in stopwords and len(w) > 1}
+
+def is_duplicate_story(candidate_title: str, candidate_summary: str, recent_headlines: list) -> Tuple[bool, str]:
+    """
+    Checks whether a candidate news item is about the exact same story as any recently published headline.
+    Enforces the rule: Same topic cannot be repeated unless there is an authentic subsequent stage/development.
+    Returns (is_duplicate: bool, reason: str).
+    """
+    cand_tokens = extract_story_tokens(candidate_title)
+    if not cand_tokens:
+        return False, ""
+
+    full_candidate_text = f"{candidate_title} {candidate_summary}"
+    
+    NEXT_STAGE_KEYWORDS = [
+        "তদন্ত কমিটি", "তদন্ত", "গ্রেপ্তার", "আটক", "মামলা",
+        "প্রত্যাহার", "ওএসডি", "অ্যাকশন", "আইনি পদক্ষেপ", "নতুন মোড়",
+        "সর্বশেষ আপডেট", "রিমান্ড", "উদ্ধার", "স্বীকারোক্তি", "বহিষ্কার"
+    ]
+
+    for prev in recent_headlines:
+        prev_tokens = extract_story_tokens(prev)
+        if not prev_tokens:
+            continue
+
+        overlap = cand_tokens.intersection(prev_tokens)
+        min_len = min(len(cand_tokens), len(prev_tokens))
+        jaccard = len(overlap) / min_len if min_len > 0 else 0
+        seq_ratio = difflib.SequenceMatcher(None, candidate_title, prev).ratio()
+
+        if jaccard >= 0.40 or seq_ratio >= 0.50 or len(overlap) >= 3:
+            matching_stages = [kw for kw in NEXT_STAGE_KEYWORDS if kw in full_candidate_text]
+            has_new_stage = bool(matching_stages)
+            prev_has_same_stage = any(kw in prev for kw in matching_stages)
+            
+            if has_new_stage and not prev_has_same_stage:
+                return False, f"নতুন স্টেজ বা অগ্রগতি ({matching_stages})"
+            else:
+                return True, f"একই ঘটনার পুনরাবৃত্তি (পূর্বে প্রকাশিত: '{prev[:35]}...', ওভারল্যাপ: {overlap})"
+
+    return False, ""
 
 class Database:
     def __init__(self):
@@ -41,7 +97,7 @@ class Database:
             logger.error(f"Error checking duplicate in Supabase: {e}")
             return False
 
-    def get_recent_headlines(self, limit: int = 35) -> list:
+    def get_recent_headlines(self, limit: int = 50) -> list:
         """Fetches the recent published headlines to detect evolving storylines and avoid duplicate stages."""
         if not self.client:
             return []

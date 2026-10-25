@@ -1,10 +1,11 @@
 import os
 import glob
+import time
 import logging
 import sys
 from src.config import MAX_POSTS_PER_RUN, DRY_RUN
-from src.db import Database
-from src.news_hunter import NewsHunter
+from src.db import Database, is_duplicate_story
+from src.news_hunter import NewsHunter, is_valid_image_url
 from src.ai_editor import AIEditor, clean_fb_caption
 from src.card_generator import CardGenerator
 from src.fb_poster import FacebookPoster
@@ -47,7 +48,7 @@ def run_agent():
     MAX_FAILED_ATTEMPTS = 2
 
     # Fetch recent published headlines to detect evolving storylines & prevent duplicate stages
-    recent_headlines = db.get_recent_headlines(limit=35)
+    recent_headlines = db.get_recent_headlines(limit=50)
     if recent_headlines:
         logger.info(f"Loaded {len(recent_headlines)} recent published headlines for multi-stage storyline tracking.")
 
@@ -62,9 +63,15 @@ def run_agent():
         link = item["link"]
         title = item["title"]
 
-        # Fast deduplication check only on candidates we actually consider
+        # Step 3.1: Fast URL deduplication check
         if db.is_already_posted(link):
             logger.debug(f"Skipping already posted news: {link}")
+            continue
+
+        # Step 3.2: Multi-stage Headline & Semantic Topic Deduplication (Python-level, 100% deterministic)
+        is_dup, dup_reason = is_duplicate_story(title, item.get("summary", ""), recent_headlines)
+        if is_dup:
+            logger.info(f"Skipping candidate '{title[:40]}...': {dup_reason}")
             continue
 
         upazila = item.get("upazila")
@@ -73,19 +80,39 @@ def run_agent():
 
         logger.info(f"Processing candidate [Score: {item.get('reach_score', 0):.1f}]: {title[:50]} ({loc_display})...")
 
-        # Step 4.1: Verify real news photo (fetch og:image if missing from RSS)
-        if not item.get("image_url"):
-            logger.info(f"No RSS image found for '{title[:40]}'. Attempting to extract og:image from source...")
-            og_img = hunter.fetch_og_image(link)
-            if og_img:
-                item["image_url"] = og_img
-                logger.info(f"Retrieved real news photo from webpage: {og_img[:60]}...")
-            else:
-                logger.warning(f"No real news image found for '{title[:40]}'. Skipping to maintain premium visual standard.")
+        # Step 4.1: Resolve real destination URL & verify authentic news photo FIRST
+        resolved_url, resolved_img = hunter.resolve_article_meta(link)
+        if resolved_url and resolved_url != link:
+            if db.is_already_posted(resolved_url):
+                logger.debug(f"Skipping resolved duplicate URL: {resolved_url}")
                 continue
+            item["link"] = resolved_url
 
-        # Step 4.2: AI Editing & Formatting (Gemini with multi-stage storyline intelligence)
-        logger.info("Passing news to Gemini AI Editor with storyline tracking...")
+        if resolved_img and is_valid_image_url(resolved_img):
+            item["image_url"] = resolved_img
+
+        img_url = item.get("image_url")
+        if not img_url or not is_valid_image_url(img_url):
+            logger.warning(f"No authentic news image found for '{title[:40]}'. Skipping to maintain premium visual standard.")
+            continue
+
+        # Pre-download and verify image authenticity before spending Gemini API quota
+        temp_img_path = f"/tmp/check_{int(time.time()*1000)}.jpg"
+        if not generator.download_image(img_url, temp_img_path):
+            logger.warning(f"Failed to download image from {img_url[:60]}. Skipping candidate.")
+            continue
+
+        if generator.is_stock_or_white_graphic(temp_img_path):
+            logger.warning(f"Image is stock illustration, white graphic, or search engine logo. Skipping candidate '{title[:40]}'.")
+            if os.path.exists(temp_img_path):
+                os.remove(temp_img_path)
+            continue
+
+        if os.path.exists(temp_img_path):
+            os.remove(temp_img_path)
+
+        # Step 4.2: AI Editing & Formatting (Gemini 2.0/1.5 Flash with multi-stage storyline intelligence)
+        logger.info("Passing verified news to Gemini AI Editor with storyline tracking...")
         analysis = editor.analyze_news(item, recent_headlines=recent_headlines)
 
         if not analysis or not analysis.get("is_relevant", True):
@@ -101,7 +128,7 @@ def run_agent():
         card_image_path = generator.generate_card(news_payload)
 
         if not card_image_path or not os.path.exists(card_image_path):
-            logger.warning(f"Photocard generation skipped (missing image or stock clipart detected) for '{title[:40]}'. Trying next candidate with authentic photo...")
+            logger.warning(f"Photocard generation skipped for '{title[:40]}'. Trying next candidate with authentic photo...")
             continue
 
         # Step 4.4: Post to Facebook Page Feed
@@ -115,9 +142,11 @@ def run_agent():
             first_comment = "উত্তরবঙ্গের প্রতিটি জনপদের নির্ভরযোগ্য খবরের জন্য আমাদের পেজে Follow দিয়ে যুক্ত থাকুন: https://facebook.com/northvoicebd"
             poster.post_comment(fb_post_id, first_comment)
 
-            # Step 4.6: Save signature to Supabase
+            # Step 4.6: Save signatures to Supabase
             headline = news_payload.get("headline_html", title)
-            db.save_post(news_url=link, headline=headline, fb_post_id=fb_post_id)
+            db.save_post(news_url=item["link"], headline=headline, fb_post_id=fb_post_id)
+            if link != item["link"]:
+                db.save_post(news_url=link, headline=headline, fb_post_id=fb_post_id)
             posted_count += 1
             logger.info(f"✅ Successfully processed and posted news ({posted_count}/{MAX_POSTS_PER_RUN})!")
         else:
