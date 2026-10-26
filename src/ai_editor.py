@@ -377,70 +377,48 @@ class AIEditor:
 """
 
         # Dynamic model selection with automatic discovery & robust fallbacks
-        models_to_try = []
-        if self.client:
-            try:
-                discovered = []
-                for m in self.client.models.list():
-                    m_name = getattr(m, "name", "")
-                    clean_name = m_name.replace("models/", "")
-                    actions = getattr(m, "supported_actions", []) or []
-                    if not actions or "generateContent" in actions or "generate_content" in actions:
-                        discovered.append(clean_name)
-                # Prioritize flash models, then pro models
-                flash_models = [m for m in discovered if "flash" in m.lower()]
-                other_models = [m for m in discovered if m not in flash_models]
-                models_to_try = flash_models + other_models
-            except Exception as e:
-                logger.debug(f"Dynamic Gemini model discovery skipped: {e}")
-
-        if not models_to_try:
-            models_to_try = [
-                "gemini-2.5-flash",
-                "gemini-3.8-flash",
-                "gemini-1.5-flash-latest",
-                "gemini-2.5-pro",
-                "gemini-2.0-flash-exp",
-                "gemini-1.5-flash",
-                "gemini-2.0-flash"
-            ]
+        models_to_try = [
+            "gemini-2.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-2.5-pro",
+            "gemini-3.8-flash",
+        ]
         last_error = None
 
         for model_name in models_to_try:
-            for attempt in range(2):
-                try:
-                    response = self.client.models.generate_content(
-                        model=model_name,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            temperature=0.7
-                        )
+            try:
+                response = self.client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.7
                     )
-                    raw_text = response.text.strip()
-                    if raw_text.startswith("```"):
-                        lines = raw_text.splitlines()
-                        if lines[0].startswith("```"):
-                            lines = lines[1:]
-                        if lines and lines[-1].startswith("```"):
-                            lines = lines[:-1]
-                        raw_text = "\n".join(lines).strip()
+                )
+                raw_text = response.text.strip()
+                if raw_text.startswith("```"):
+                    lines = raw_text.splitlines()
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines and lines[-1].startswith("```"):
+                        lines = lines[:-1]
+                    raw_text = "\n".join(lines).strip()
 
-                    data = json.loads(raw_text)
-                    if "fb_caption" in data and data["fb_caption"]:
-                        data["fb_caption"] = clean_fb_caption(data["fb_caption"])
+                data = json.loads(raw_text)
+                if "fb_caption" in data and data["fb_caption"]:
+                    data["fb_caption"] = clean_fb_caption(data["fb_caption"])
 
-                    # Enforce strict non-repetition: consecutive posts must never use the same template
-                    chosen_tmpl = data.get("template", "breaking")
-                    final_tmpl = select_shuffled_template(chosen_tmpl, last_template, news_item)
-                    data["template"] = final_tmpl
+                # Enforce strict non-repetition: consecutive posts must never use the same template
+                chosen_tmpl = data.get("template", "breaking")
+                final_tmpl = select_shuffled_template(chosen_tmpl, last_template, news_item)
+                data["template"] = final_tmpl
 
-                    logger.info(f"AI Editor ({model_name}) successfully drafted news using template: '{final_tmpl}' (Preferred: {chosen_tmpl}, Last: {last_template}) for '{title[:30]}...'")
-                    return data
-                except Exception as e:
-                    logger.warning(f"Gemini API ({model_name}, attempt {attempt+1}) failed: {e}")
-                    last_error = e
-                    time.sleep(2)
+                logger.info(f"AI Editor ({model_name}) successfully drafted news using template: '{final_tmpl}' (Preferred: {chosen_tmpl}, Last: {last_template}) for '{title[:30]}...'")
+                return data
+            except Exception as e:
+                logger.warning(f"Gemini API ({model_name}) failed: {e}")
+                last_error = e
+                time.sleep(1)
 
         logger.error(f"All Gemini models failed. Last error: {last_error}. Using fallback editor.")
         return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, is_international=is_international, recent_headlines=recent_headlines, last_template=last_template)
