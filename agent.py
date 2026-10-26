@@ -176,11 +176,8 @@ def run_agent():
         fb_post_id = poster.post_photocard(card_image_path, caption)
 
         if fb_post_id:
-            # Step 4.6: Post official first comment on the post
-            first_comment = "উত্তরবঙ্গের প্রতিটি জনপদের নির্ভরযোগ্য খবরের জন্য আমাদের পেজে Follow দিয়ে যুক্ত থাকুন: https://facebook.com/northvoicebd"
-            poster.post_comment(fb_post_id, first_comment)
-
-            # Step 4.7: Save signatures to Supabase with template metadata
+            # Note: Do not auto-comment links to prevent Meta automated link-spam / engagement-bait demotion
+            # Step 4.6: Save signatures to Supabase with template metadata
             headline = news_payload.get("headline_html", title)
             db.save_post(news_url=item["link"], headline=headline, fb_post_id=fb_post_id, template=template_used)
             if link != item["link"]:

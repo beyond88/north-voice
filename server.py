@@ -313,10 +313,7 @@ def publish_news_now(payload: Dict):
     # 5. Publish to Facebook
     fb_post_id = poster.post_photocard(card_path, caption)
     if fb_post_id:
-        # First comment
-        poster.post_comment(fb_post_id, "উত্তরবঙ্গের নির্ভরযোগ্য খবরের জন্য আমাদের পেজে Follow দিয়ে যুক্ত থাকুন: https://facebook.com/northvoicebd")
-        
-        # Save to DB
+        # Save to DB (Avoid automated self-comment links to protect algorithmic organic reach)
         template_used = news_payload.get("template", "breaking")
         headline = news_payload.get("headline_html", title)
         db.save_post(news_url=link, headline=headline, fb_post_id=fb_post_id, template=template_used)
