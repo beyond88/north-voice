@@ -376,7 +376,34 @@ class AIEditor:
 }}
 """
 
-        models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash"]
+        # Dynamic model selection with automatic discovery & robust fallbacks
+        models_to_try = []
+        if self.client:
+            try:
+                discovered = []
+                for m in self.client.models.list():
+                    m_name = getattr(m, "name", "")
+                    clean_name = m_name.replace("models/", "")
+                    actions = getattr(m, "supported_actions", []) or []
+                    if not actions or "generateContent" in actions or "generate_content" in actions:
+                        discovered.append(clean_name)
+                # Prioritize flash models, then pro models
+                flash_models = [m for m in discovered if "flash" in m.lower()]
+                other_models = [m for m in discovered if m not in flash_models]
+                models_to_try = flash_models + other_models
+            except Exception as e:
+                logger.debug(f"Dynamic Gemini model discovery skipped: {e}")
+
+        if not models_to_try:
+            models_to_try = [
+                "gemini-2.5-flash",
+                "gemini-3.8-flash",
+                "gemini-1.5-flash-latest",
+                "gemini-2.5-pro",
+                "gemini-2.0-flash-exp",
+                "gemini-1.5-flash",
+                "gemini-2.0-flash"
+            ]
         last_error = None
 
         for model_name in models_to_try:
