@@ -378,47 +378,52 @@ class AIEditor:
 
         # Dynamic model selection with automatic discovery & robust fallbacks
         models_to_try = [
+            "gemini-3.8-flash",
+            "gemini-3.1-pro-preview",
             "gemini-2.5-flash",
             "gemini-1.5-flash-latest",
-            "gemini-2.5-pro",
-            "gemini-3.8-flash",
         ]
         last_error = None
 
         for model_name in models_to_try:
-            try:
-                response = self.client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.7
+            for attempt in range(2):
+                try:
+                    response = self.client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            temperature=0.7
+                        )
                     )
-                )
-                raw_text = response.text.strip()
-                if raw_text.startswith("```"):
-                    lines = raw_text.splitlines()
-                    if lines[0].startswith("```"):
-                        lines = lines[1:]
-                    if lines and lines[-1].startswith("```"):
-                        lines = lines[:-1]
-                    raw_text = "\n".join(lines).strip()
+                    raw_text = response.text.strip()
+                    if raw_text.startswith("```"):
+                        lines = raw_text.splitlines()
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines and lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        raw_text = "\n".join(lines).strip()
 
-                data = json.loads(raw_text)
-                if "fb_caption" in data and data["fb_caption"]:
-                    data["fb_caption"] = clean_fb_caption(data["fb_caption"])
+                    data = json.loads(raw_text)
+                    if "fb_caption" in data and data["fb_caption"]:
+                        data["fb_caption"] = clean_fb_caption(data["fb_caption"])
 
-                # Enforce strict non-repetition: consecutive posts must never use the same template
-                chosen_tmpl = data.get("template", "breaking")
-                final_tmpl = select_shuffled_template(chosen_tmpl, last_template, news_item)
-                data["template"] = final_tmpl
+                    # Enforce strict non-repetition: consecutive posts must never use the same template
+                    chosen_tmpl = data.get("template", "breaking")
+                    final_tmpl = select_shuffled_template(chosen_tmpl, last_template, news_item)
+                    data["template"] = final_tmpl
 
-                logger.info(f"AI Editor ({model_name}) successfully drafted news using template: '{final_tmpl}' (Preferred: {chosen_tmpl}, Last: {last_template}) for '{title[:30]}...'")
-                return data
-            except Exception as e:
-                logger.warning(f"Gemini API ({model_name}) failed: {e}")
-                last_error = e
-                time.sleep(1)
+                    logger.info(f"AI Editor ({model_name}) successfully drafted news using template: '{final_tmpl}' (Preferred: {chosen_tmpl}, Last: {last_template}) for '{title[:30]}...'")
+                    return data
+                except Exception as e:
+                    err_str = str(e)
+                    logger.warning(f"Gemini API ({model_name}, attempt {attempt+1}) failed: {e}")
+                    last_error = e
+                    if "503" in err_str or "high demand" in err_str.lower():
+                        time.sleep(2)
+                        continue
+                    break
 
         logger.error(f"All Gemini models failed. Last error: {last_error}. Using fallback editor.")
         return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, is_international=is_international, recent_headlines=recent_headlines, last_template=last_template)
