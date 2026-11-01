@@ -175,51 +175,60 @@ class AIEditor:
 
         full_text = f"{title} {summary}"
         loc_display = f"{upazila}, {district}" if upazila else district
+        full_text_lower = full_text.lower()
+
+        # Context-aware discussion question
+        if any(w in full_text_lower for w in ["আলু", "ধান", "ফসল", "দাম", "বাজার", "কোল্ড স্টোরেজ", "সার", "ন্যায্যমূল্য"]):
+            cta_question = "আপনার এলাকায় বর্তমানে এই পণ্যের বাজারদর বা সরবরাহ পরিস্থিতি কেমন? কমেন্টে জানান।"
+        elif any(w in full_text_lower for w in ["সড়ক", "দুর্ঘটনা", "নিহত", "আহত", "মহাসড়ক", "নিরাপত্তা"]):
+            cta_question = "সড়কে শৃঙ্খলা ও জননিরাপত্তা নিশ্চিত করতে স্থানীয় পর্যায়ে কী ধরনের পদক্ষেপ জরুরি? আপনার মতামত জানান।"
+        elif any(w in full_text_lower for w in ["তিস্তা", "নদী", "ভাঙন", "বন্যা", "বাঁধ", "পানি"]):
+            cta_question = "উত্তরবঙ্গের নদ-নদী রক্ষা ও টেকসই বাঁধ নির্মাণে দীর্ঘমেয়াদী পরিকল্পনা কতটা জরুরি? আপনার মতামত দিন।"
+        elif any(w in full_text_lower for w in ["মেগা প্রকল্প", "রেল", "সেতু", "উন্নয়ন", "অর্থনীতি"]):
+            cta_question = "উন্নয়ন প্রকল্পগুলোর সুফল তৃণমূলের সাধারণ মানুষের কাছে পৌঁছাতে কী করণীয়? কমেন্টে আলোচনা করুন।"
+        elif any(w in full_text_lower for w in ["গাজা", "ফিলিস্তিন", "ইসরায়েল", "যুদ্ধ", "মধ্যপ্রাচ্য", "ইরান", "লেবানন"]):
+            cta_question = "মধ্যপ্রাচ্যের এই চলমান সংঘাত ও মানবিক সংকট নিরসনে বিশ্বনেতাদের ভূমিকা আপনি কীভাবে দেখছেন? মতামত জানান।"
+        elif any(w in full_text_lower for w in ["যুক্তরাষ্ট্র", "ট্রাম্প", "বাইডেন", "নির্বাচন"]):
+            cta_question = "এই রাজনৈতিক প্রেক্ষাপট ও সিদ্ধান্তের প্রভাব আন্তর্জাতিক অঙ্গনে কতটা পড়বে বলে আপনি মনে করেন? কমেন্টে জানান।"
+        elif any(w in full_text_lower for w in ["বলেন", "মন্তব্য", "দাবি", "হুশিয়ারি", "ঘোষণা", "বক্তব্য"]):
+            cta_question = "বক্তার এই বক্তব্যের সাথে আপনি কি একমত? আপনার যুক্তিযুক্ত মতামত কমেন্টে তুলে ধরুন।"
+        else:
+            cta_question = "এ বিষয়ে আপনার সুচিন্তিত ও দায়িত্বশীল মতামত কমেন্টে তুলে ধরুন।"
+
+        # Anti-spam clean hashtags (maximum 2-3 focused tags)
+        if district == "আন্তর্জাতিক" or is_international:
+            hashtags = "#NorthVoice #আন্তর্জাতিক #বিশ্বসংবাদ"
+        elif district == "সারা দেশ":
+            hashtags = "#NorthVoice #বাংলাদেশ #জাতীয়সংবাদ"
+        elif upazila:
+            hashtags = f"#NorthVoice #{district} #{upazila}"
+        else:
+            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district}"
 
         # 1. International News (Yellow Badge + Dark Slate Card - Global)
         if district == "আন্তর্জাতিক" or is_international:
             preferred_template = "viral"
             subhead = "আন্তর্জাতিক"
-            cta_question = "আন্তর্জাতিক এই ঘটনাটিকে আপনি কীভাবে দেখছেন? আপনার মতামত কমেন্টে জানান।"
-            hashtags = "#NorthVoice #আন্তর্জাতিক #InternationalNews #Viral"
         # 2. Facebook Viral Topics (Yellow Badge + Dark Slate Card - Whole Bangladesh)
-        elif is_viral or any(vt in full_text.lower() for vt in ["ভাইরাল", "তোলপাড়", "তোলপাড়", "আলোড়ন", "সামাজিক যোগাযোগমাধ্যম", "নেটিজেনদের", "ভিডিও ছড়িয়ে"]):
+        elif is_viral or any(vt in full_text_lower for vt in ["ভাইরাল", "তোলপাড়", "তোলপাড়", "আলোড়ন", "সামাজিক যোগাযোগমাধ্যম", "নেটিজেনদের", "ভিডিও ছড়িয়ে"]):
             preferred_template = "viral"
             subhead = "সারা দেশ"
-            cta_question = "সামাজিক যোগাযোগমাধ্যমে তোলপাড় সৃষ্টি করা এই ঘটনাটিকে আপনি কীভাবে দেখছেন? আপনার সুচিন্তিত মতামত কমেন্টে জানান।"
-            upazila_tag = f"#{upazila} " if upazila else ""
-            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#Viral #BangladeshNews"
         # 3. Quote Card (Dark Editorial)
         elif any(w in full_text for w in ["বলেন", "মন্তব্য", "দাবি করেন", "হুশিয়ারি", "উক্তি", "ঘোষণা"]):
             preferred_template = "quote"
             subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
-            cta_question = f"বক্তার এই বক্তব্যের সাথে আপনি কি একমত? আপনার যুক্তিযুক্ত মতামত কমেন্টে তুলে ধরুন।"
-            upazila_tag = f"#{upazila} " if upazila else ""
-            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
         # 4. Inqilab Style (Politics, bilateral, governance)
         elif any(w in full_text for w in ["রাজনীতি", "সীমান্ত", "তিস্তা", "নির্বাচন", "বিএনপি", "জামায়াত", "সরকার", "আন্দোলন"]):
             preferred_template = "inqilab_style"
             subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
-            cta_question = f"এই সমসাময়িক প্রেক্ষাপট নিয়ে আপনার মূল্যায়ন কী? কমেন্টে আলোচনা করুন।"
-            upazila_tag = f"#{upazila} " if upazila else ""
-            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
         # 5. General / Broadsheet News (Agriculture, Development, Economy, Education, Environment)
         elif any(w in full_text for w in ["উন্নয়ন", "কৃষি", "ফসল", "শিক্ষা", "অর্থনীতি", "প্রকল্প", "আবহাওয়া", "শীত", "বৃষ্টি", "নদী"]):
             preferred_template = "general"
             subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
-            cta_question = f"উত্তরবঙ্গের সামগ্রিক উন্নয়নে এ ধরনের উদ্যোগ কতটা তাৎপর্যপূর্ণ বলে আপনি মনে করেন? আপনার মতামত জানান।"
-            upazila_tag = f"#{upazila} " if upazila else ""
-            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
         # 6. Signature Crimson Photocard (Breaking, Accidents, Crime, Alerts)
         else:
             preferred_template = "breaking"
             subhead = f"{upazila} বার্তা" if upazila else (f"{district} বার্তা" if district != "সারা দেশ" else "সারা দেশ")
-            if any(w in full_text for w in ["নিহত", "আহত", "দুর্ঘটনা", "গ্রেপ্তার", "আটক", "আগুন", "ডাকাতি", "খুন", "অবরোধ"]):
-                cta_question = f"এ বিষয়ে আপনার এলাকার সার্বিক পরিস্থিতি সম্পর্কে আপনার মতামত কমেন্টে জানান।"
-            else:
-                cta_question = f"এ বিষয়ে আপনার সুচিন্তিত মতামত কমেন্টে জানান।"
-            upazila_tag = f"#{upazila} " if upazila else ""
-            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district} {upazila_tag}#NorthBengal #BangladeshNews"
 
         item_ctx = {
             "title": title,
@@ -230,9 +239,16 @@ class AIEditor:
         }
         final_template = select_shuffled_template(preferred_template, last_template, item_ctx)
 
-        formatted_body = self.format_clean_story(summary, max_chars=900)
-        if not formatted_body:
-            formatted_body = title
+        # Clean summary to prevent duplicate title repetition at top of body
+        import re
+        clean_summary = summary.strip()
+        if clean_summary.startswith(title.strip()):
+            clean_summary = clean_summary[len(title.strip()):].strip()
+            clean_summary = re.sub(r"^[\s—–:-]+", "", clean_summary).strip()
+
+        formatted_body = self.format_clean_story(clean_summary if clean_summary else summary, max_chars=900)
+        if not formatted_body or formatted_body == title:
+            formatted_body = clean_summary if clean_summary else summary
 
         caption = (
             f"{title}\n\n"
@@ -379,14 +395,13 @@ class AIEditor:
         # Dynamic model selection with automatic discovery & robust fallbacks
         models_to_try = [
             "gemini-3.8-flash",
-            "gemini-3.1-pro-preview",
-            "gemini-2.5-flash",
-            "gemini-1.5-flash-latest",
+            "gemini-3.1-flash-lite",
+            "gemini-flash-latest",
         ]
         last_error = None
 
         for model_name in models_to_try:
-            for attempt in range(2):
+            for attempt in range(3):
                 try:
                     response = self.client.models.generate_content(
                         model=model_name,
@@ -420,8 +435,8 @@ class AIEditor:
                     err_str = str(e)
                     logger.warning(f"Gemini API ({model_name}, attempt {attempt+1}) failed: {e}")
                     last_error = e
-                    if "503" in err_str or "high demand" in err_str.lower():
-                        time.sleep(2)
+                    if "503" in err_str or "high demand" in err_str.lower() or "unavailable" in err_str.lower():
+                        time.sleep(3 * (attempt + 1))
                         continue
                     break
 

@@ -100,5 +100,17 @@ class PostSpamAuditor:
             score += 30
             issues.append("Caption is too short (< 80 characters)")
 
+        # Check 7: Hate Speech & Derogatory Religious Slur Filter (Meta Shadowban Prevention)
+        HATE_SPEECH_TRIGGERS = [
+            "গোমূত্র চেটে", "গোমূত্র", "কাফের", "মালাউন", "মুরতাদ",
+            "নাস্তিকদের জবাই", "উগ্রবাদী", "ধর্মদ্রোহী", "জঙ্গিবাদ কায়েম",
+            "রক্তগঙ্গা", "গণহত্যা চালাও", "খতম করো", "মেরে ফেলো"
+        ]
+        for trigger in HATE_SPEECH_TRIGGERS:
+            if trigger in caption_lower or trigger in title.lower():
+                score += 100
+                issues.append(f"Hate speech / religious slur trigger detected: '{trigger}' (Meta Community Standards violation prevention)")
+                break
+
         is_safe = (score <= 25)
         return score, issues, is_safe

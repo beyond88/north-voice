@@ -44,15 +44,9 @@ def run_agent():
         return
 
     # Step 2: Sort all candidates in memory
-    # Viral & International news take precedence over regular regional news
-    # When both overlap in a cycle, viral content is ranked #1 and regular content is skipped.
-    candidates.sort(
-        key=lambda x: (
-            1 if (x.get("is_viral") or x.get("is_international")) else 0,
-            x.get("reach_score", 0)
-        ),
-        reverse=True
-    )
+    # Rank directly by reach_score (factors in grassroots local impact, high-impact world events, and authentic visuals)
+    # Fluff and trivial celebrity gossip are already heavily penalized in reach_score.
+    candidates.sort(key=lambda x: x.get("reach_score", 0), reverse=True)
 
     logger.info(f"Top 5 Ranked Candidates by Virality & Organic Reach Potential:")
     for idx, c in enumerate(candidates[:5], 1):
@@ -103,7 +97,7 @@ def run_agent():
         logger.info(f"Processing candidate [Score: {item.get('reach_score', 0):.1f}]: {title[:50]} ({loc_display})...")
 
         # Step 4.1: Resolve real destination URL & verify authentic news photo FIRST
-        resolved_url, resolved_img = hunter.resolve_article_meta(link)
+        resolved_url, resolved_img, article_body = hunter.resolve_article_meta(link)
         if resolved_url and resolved_url != link:
             if db.is_already_posted(resolved_url):
                 logger.debug(f"Skipping resolved duplicate URL: {resolved_url}")
@@ -112,6 +106,11 @@ def run_agent():
 
         if resolved_img and is_valid_image_url(resolved_img):
             item["image_url"] = resolved_img
+
+        # Enrich summary with deep authentic article text if available
+        if article_body and len(article_body) > len(item.get("summary", "")):
+            item["summary"] = article_body
+            logger.info(f"Enriched candidate '{title[:35]}' with full article body ({len(article_body)} chars).")
 
         img_url = item.get("image_url")
         if not img_url or not is_valid_image_url(img_url):

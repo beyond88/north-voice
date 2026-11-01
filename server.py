@@ -270,13 +270,15 @@ def publish_news_now(payload: Dict):
     title = payload.get("title", "")
     link = payload.get("link", f"manual_{int(time.time())}")
     
-    # 1. Resolve authentic photo
+    # 1. Resolve authentic photo & rich article text
     img_url = payload.get("image_url")
-    if not img_url or not is_valid_image_url(img_url):
-        resolved_url, resolved_img = hunter.resolve_article_meta(link)
+    if not img_url or not is_valid_image_url(img_url) or not payload.get("summary"):
+        resolved_url, resolved_img, article_body = hunter.resolve_article_meta(link)
         if resolved_img:
             img_url = resolved_img
             payload["image_url"] = img_url
+        if article_body and len(article_body) > len(payload.get("summary", "")):
+            payload["summary"] = article_body
 
     if not img_url:
         raise HTTPException(status_code=400, detail="প্রকৃত সংবাদের ছবি ছাড়া ফটোকার্ড পোস্ট করা সম্ভব নয়। অনুগ্রহ করে একটি আসল ফটো দিন।")

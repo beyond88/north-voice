@@ -94,15 +94,19 @@ class NewsHunter:
             logger.debug(f"Could not fetch og:image from {url}: {e}")
         return None
 
-    def resolve_article_meta(self, url: str) -> Tuple[str, Optional[str]]:
+    def resolve_article_meta(self, url: str) -> Tuple[str, Optional[str], Optional[str]]:
         """
-        Resolves the true destination URL and real authentic news image.
+        Resolves the true destination URL, real authentic news image, and rich article text paragraphs.
         For Google News redirect links, uses Playwright to follow client-side redirects to destination publisher.
-        Returns (resolved_url, og_image_url).
+        Returns (resolved_url, og_image_url, article_text).
         """
         if not url:
-            return url, None
+            return url, None, None
             
+        resolved_url = url
+        og_img = None
+        article_text = None
+
         if "news.google.com" in url:
             try:
                 from playwright.sync_api import sync_playwright
@@ -112,20 +116,54 @@ class NewsHunter:
                     page.goto(url, timeout=12000)
                     page.wait_for_timeout(1500)
                     resolved_url = page.url
-                    og_img = None
                     og_tag = page.locator("meta[property=\"og:image\"], meta[property=\"og:image:url\"], meta[name=\"twitter:image\"]").first
                     if og_tag.count() > 0:
                         raw_img = og_tag.get_attribute("content")
                         if is_valid_image_url(raw_img):
                             og_img = raw_img
+                    
+                    # Extract rich article body paragraphs
+                    paras = page.locator("article p, div.story-element p, div.content p, p").all_inner_texts()
+                    clean_paras = [
+                        p.strip() for p in paras 
+                        if len(p.strip()) > 45 and not any(skip in p for skip in ["বিজ্ঞাপন", "কপিরাইট", "সর্বস্বত্ব", "পড়ুন", "ভিডিও", "সাবস্ক্রাইব", "Privacy", "Terms", "Cookies"])
+                    ]
+                    if clean_paras:
+                        article_text = "\n\n".join(clean_paras[:4])
+
                     browser.close()
-                    return resolved_url, og_img
+                    return resolved_url, og_img, article_text
             except Exception as e:
                 logger.debug(f"Could not resolve Google News url via Playwright: {e}")
                 
-        # Default requests-based resolution
-        og_img = self.fetch_og_image(url)
-        return url, og_img
+        # Default requests-based resolution & article text extraction
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+            res = requests.get(url, headers=headers, timeout=6, allow_redirects=True)
+            if res.status_code == 200:
+                resolved_url = res.url
+                soup = BeautifulSoup(res.text, "html.parser")
+                for prop in ["og:image", "og:image:url", "og:image:secure_url", "twitter:image"]:
+                    tag = soup.find("meta", property=prop) or soup.find("meta", attrs={"name": prop})
+                    if tag and tag.get("content"):
+                        img = tag["content"].strip()
+                        if is_valid_image_url(img):
+                            og_img = img
+                            break
+
+                paras = [p.get_text().strip() for p in soup.find_all("p")]
+                clean_paras = [
+                    p for p in paras 
+                    if len(p) > 45 and not any(skip in p for skip in ["বিজ্ঞাপন", "কপিরাইট", "সর্বস্বত্ব", "পড়ুন", "ভিডিও", "সাবস্ক্রাইব"])
+                ]
+                if clean_paras:
+                    article_text = "\n\n".join(clean_paras[:4])
+        except Exception as e:
+            logger.debug(f"Could not fetch og:image/text from {url}: {e}")
+
+        return resolved_url, og_img, article_text
 
     AMBIGUOUS_UPAZILAS = {
         "বিরল": ["দিনাজপুর", "উপজেলা", "থানা"],
@@ -288,6 +326,29 @@ class NewsHunter:
         ]
         if item.get("is_viral") or any(vt in text for vt in viral_triggers):
             score += 40
+
+        # 7. Low-Value Celebrity Fluff / Gossip Penalty (-50 pts)
+        # Guarantees North Voice maintains serious journalistic integrity over trivial celebrity gossip
+        fluff_keywords = [
+            "ফ্যাশন মুহূর্ত", "ফ্যাশন", "পোশাক", "লুক", "মেকআপ", "বিয়ে", "বিবাহ",
+            "হানিমুন", "প্রেম", "প্রেমিক", "প্রেমিকা", "অভিনেত্রী", "অভিনেতা", "নায়িকা",
+            "নায়ক", "তারকাদের", "তারকা", "গসিপ", "জন্মদিন", "জন্মদিনে", "ফটোশুট",
+            "ইনস্টাগ্রাম", "উড়োজাহাজে ফুল"
+        ]
+        if any(fk in text for fk in fluff_keywords):
+            score -= 50
+
+        # 8. High-Impact World Events & Geopolitics Bonus (+35 pts)
+        # Prioritizes significant global crises, diplomacy, immigration, and world economy
+        high_impact_intl = [
+            "গাজা", "ফিলিস্তিন", "ইসরায়েল", "লেবানন", "ইরান", "যুদ্ধ", "যুদ্ধবিরতি",
+            "ক্ষেপণাস্ত্র", "হামলা", "যুক্তরাষ্ট্র", "ট্রাম্প", "বাইডেন", "রাশিয়া",
+            "ইউক্রেন", "চীন", "ভারত", "সীমান্ত", "তিস্তা", "অভিবাসন", "ভিসা",
+            "প্রবাসী", "রেমিট্যান্স", "সৌদি আরব", "সোনার দাম", "ডলারের দাম",
+            "জ্বালানি", "তেলের দাম", "বিশ্বকাপ", "আইসিসি"
+        ]
+        if (item.get("is_international") or item.get("district") == "আন্তর্জাতিক") and any(ik in text for ik in high_impact_intl):
+            score += 35
 
         return score
 
