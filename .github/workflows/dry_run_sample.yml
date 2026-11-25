@@ -15,11 +15,10 @@ jobs:
       - run: pip install -r requirements.txt && playwright install chromium --with-deps
       - name: Build sample post (no Facebook, no DB writes)
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           DRY_RUN: 'true'
-        run: python scripts/dry_run_sample.py
+        run: python scripts/render_cards.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
