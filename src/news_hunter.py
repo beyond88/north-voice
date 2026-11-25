@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 import unicodedata
 import datetime
 import logging
@@ -20,6 +21,26 @@ def bn_normalize(text: str) -> str:
     return (text.replace("\u09a1\u09bc", "\u09dc")
                 .replace("\u09a2\u09bc", "\u09dd")
                 .replace("\u09af\u09bc", "\u09df"))
+
+# Query params that make image CDNs (e.g. Prothom Alo's) burn the outlet's branded banner into the
+# share image. A card carrying another outlet's watermark is a strong "unoriginal repost" signal.
+_IMAGE_OVERLAY_PARAMS = ("overlay", "ogimage", "watermark", "mark", "blend", "txt")
+_IMAGE_SHARE_CROP_PARAMS = ("rect", "ar", "mode")
+
+
+def clean_image_url(url: Optional[str]) -> Optional[str]:
+    """Strips watermark/overlay and social-share crop params from a news image URL."""
+    if not url or "?" not in url:
+        return url
+    parts = urllib.parse.urlsplit(url)
+    params = urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+    has_overlay = any(k.lower().startswith(_IMAGE_OVERLAY_PARAMS) for k, _ in params)
+    if not has_overlay:
+        return url
+    kept = [(k, v) for k, v in params
+            if not k.lower().startswith(_IMAGE_OVERLAY_PARAMS) and k.lower() not in _IMAGE_SHARE_CROP_PARAMS]
+    return urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(kept)))
+
 
 def is_valid_image_url(url: Optional[str]) -> bool:
     """Verifies that an image URL is a real photograph and not a search engine icon, site logo, or placeholder."""
