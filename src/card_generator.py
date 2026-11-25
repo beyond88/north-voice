@@ -106,7 +106,8 @@ class CardGenerator:
 
     def download_image(self, url: str, output_path: str) -> bool:
         """Downloads external news image with proper user-agent headers."""
-        from src.news_hunter import is_valid_image_url
+        from src.news_hunter import is_valid_image_url, clean_image_url
+        url = clean_image_url(url)
         if not is_valid_image_url(url):
             logger.warning(f"Rejecting invalid/search-engine/logo image URL: {url}")
             return False
