@@ -1,10 +1,12 @@
 import json
+import re
 import time
+import random
 import logging
 from typing import Dict, Optional
 from google import genai
 from google.genai import types
-from src.config import GEMINI_API_KEY, BRAND_NAME, BRAND_HANDLE
+from src.config import GEMINI_API_KEY, GEMINI_MODELS, BRAND_NAME, BRAND_HANDLE
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,64 @@ def clean_fb_caption(caption: str) -> str:
                 lines = lines[1:]
             return "\n".join(lines).strip()
     return caption.strip()
+
+def build_hashtags(district: Optional[str], upazila: Optional[str], is_international: bool = False) -> str:
+    """
+    1-3 accurate hashtags. Never emits an empty '#', never tags a non-North-Bengal story as #উত্তরবঙ্গ,
+    and never adds generic spam tags like #Viral.
+    """
+    tags = ["#NorthVoice"]
+    non_local = {"আন্তর্জাতিক", "সারা দেশ", "", None}
+    if is_international or district == "আন্তর্জাতিক":
+        tags.append("#আন্তর্জাতিক")
+    elif district not in non_local:
+        tags.append(f"#{district.replace(' ', '')}")
+        if upazila and upazila.strip():
+            tags.append(f"#{upazila.strip().replace(' ', '')}")
+    return " ".join(tags)
+
+
+_HASHTAG_LINE = re.compile(r"^\s*(#\S*\s*)+$")
+_SOURCE_LINE = re.compile(r"^\s*(তথ্যসূত্র|সূত্র)\s*[:：]")
+
+
+def strip_footer(caption: str) -> str:
+    """Removes hashtag-only lines, lone '#' tokens and source lines the model may have added."""
+    kept = []
+    for line in (caption or "").splitlines():
+        if _HASHTAG_LINE.match(line) or _SOURCE_LINE.match(line):
+            continue
+        kept.append(re.sub(r"(?<!\S)#(?=\s|$)", "", line).rstrip())
+    text = "\n".join(kept).strip()
+    return re.sub(r"\n{3,}", "\n\n", text)
+
+
+def _ngrams(text: str, n: int = 5) -> set:
+    words = re.findall(r"[\u0980-\u09FFA-Za-z0-9]+", text or "")
+    return {" ".join(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def copy_overlap_ratio(caption: str, source_text: str, n: int = 5) -> float:
+    """
+    Share of the caption's 5-word sequences that also appear in the source article.
+    Original rewriting scores near 0; pasted or lightly edited text scores high.
+    """
+    cap = _ngrams(strip_footer(caption), n)
+    if not cap:
+        return 0.0
+    return len(cap & _ngrams(source_text, n)) / len(cap)
+
+
+MAX_COPY_OVERLAP = 0.12
+
+# Rotating caption shapes so the page does not post the same skeleton every time.
+CAPTION_STYLES = [
+    "প্রথম লাইনে ঘটনার সবচেয়ে মানবিক বা স্থানীয় দিকটা (কার জীবনে কী প্রভাব) দিয়ে শুরু করো, তারপর মূল তথ্য, শেষে এলাকার মানুষের জন্য এর মানে কী।",
+    "একটা ছোট, সোজা বাক্যে মূল খবর দাও। তারপর ২-৩টি অনুচ্ছেদে প্রেক্ষাপট: আগে এ এলাকায় এমন কিছু হয়েছে কি না, কোন সমস্যা দীর্ঘদিনের (শুধু মূল তথ্যে থাকলে)।",
+    "স্থানীয় মানুষের দৃষ্টিকোণ থেকে লেখো: কৃষক/শিক্ষার্থী/যাত্রী/ব্যবসায়ী যারা প্রভাবিত তাদের অবস্থা আগে, তারপর প্রশাসন বা সংশ্লিষ্টদের বক্তব্য/তথ্য।",
+    "'কী ঘটেছে' এবং 'এখন কী হবে' এই দুই ভাগে লেখো, কোনো লেবেল বা উপশিরোনাম ছাড়া স্বাভাবিক অনুচ্ছেদে। প্রয়োজন মনে হলে শেষে একটি স্বাভাবিক প্রশ্ন রাখো, না হলে রেখো না।",
+]
+
 
 def select_shuffled_template(preferred: str, last_template: Optional[str], news_item: Dict) -> str:
     """
@@ -195,15 +255,7 @@ class AIEditor:
         else:
             cta_question = "এ বিষয়ে আপনার সুচিন্তিত ও দায়িত্বশীল মতামত কমেন্টে তুলে ধরুন।"
 
-        # Anti-spam clean hashtags (maximum 2-3 focused tags)
-        if district == "আন্তর্জাতিক" or is_international:
-            hashtags = "#NorthVoice #আন্তর্জাতিক #বিশ্বসংবাদ"
-        elif district == "সারা দেশ":
-            hashtags = "#NorthVoice #বাংলাদেশ #জাতীয়সংবাদ"
-        elif upazila:
-            hashtags = f"#NorthVoice #{district} #{upazila}"
-        else:
-            hashtags = f"#NorthVoice #উত্তরবঙ্গ #{district}"
+        hashtags = build_hashtags(district, upazila, is_international)
 
         # 1. International News (Yellow Badge + Dark Slate Card - Global)
         if district == "আন্তর্জাতিক" or is_international:
@@ -287,20 +339,21 @@ class AIEditor:
         loc_display = "আন্তর্জাতিক" if is_international else (f"{upazila}, {district}" if upazila else district)
 
         if not self.client:
-            return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, is_international=is_international, recent_headlines=recent_headlines, last_template=last_template)
+            logger.warning("No Gemini client: skipping instead of posting source text (unoriginal content risk).")
+            return {"is_relevant": False, "reason": "AI editor unavailable (no Gemini key)", "fallback": True}
 
         if is_international:
             category_text = "আন্তর্জাতিক সংবাদ (বিদেশের ঘটনা)"
             default_subhead = "আন্তর্জাতিক"
-            hashtags_template = "#NorthVoice #আন্তর্জাতিক #InternationalNews #Viral"
         elif is_viral:
             category_text = "ফেসবুক ভাইরাল সংবাদ (সারা বাংলাদেশ)"
             default_subhead = "সারা দেশ"
-            hashtags_template = f"#NorthVoice #উত্তরবঙ্গ #{district} #{upazila if upazila else ''} #Viral #BangladeshNews"
         else:
             category_text = "আঞ্চলিক সংবাদ (উত্তরবঙ্গ)"
             default_subhead = f"{upazila} বার্তা" if upazila else f"{district} বার্তা"
-            hashtags_template = f"#NorthVoice #উত্তরবঙ্গ #{district} #{upazila if upazila else ''} #BangladeshNews"
+
+        hashtags = build_hashtags(district, upazila, is_international)
+        caption_style = random.choice(CAPTION_STYLES)
 
         recent_headlines_block = ""
         if recent_headlines:
@@ -361,21 +414,18 @@ class AIEditor:
 - ক্যাটাগরি: {category_text}
 - সূত্র: {source}
 
-ফেসবুক ক্যাপশনের ফরম্যাট (fb_caption):
-[সংবাদের শিরোনাম বা আকর্ষণীয় প্রারম্ভিক উপস্থাপনা - সম্পূর্ণ মৌলিক ভাষায় (কোনো হেডার বা ক্যাটাগরি লাইন ছাড়া)]
-
-[মূল বিবরণ - মৌলিক বাক্যগঠনে অনুচ্ছেদসমূহ, প্রতিটি প্যারার মাঝে ফাঁকা লাইন]
-
-আপনার মতামত:
-[পাঠকদের সুচিন্তিত মতামত জানতে ১টি দায়িত্বশীল ও প্রাসঙ্গিক প্রশ্ন]
-
-তথ্যসূত্র: {source}
-
-{hashtags_template}
+ফেসবুক ক্যাপশন (fb_caption) লেখার নিয়ম (মৌলিকতা সবচেয়ে গুরুত্বপূর্ণ):
+- Facebook অন্যের খবর হুবহু বা সামান্য বদলে পোস্ট করাকে "unoriginal content" ধরে reach কমিয়ে দেয়। তাই মূল সংবাদের ভাষা, বাক্যের ক্রম ও কাঠামো অনুসরণ করবে না। তথ্যগুলো (নাম, সংখ্যা, স্থান, তারিখ) ঠিক রেখে পুরোটা নিজের ভাষায় নতুনভাবে সাজাবে।
+- মূল সংবাদের পরপর ৪টি শব্দও হুবহু রাখবে না (মানুষ, পদবি ও প্রতিষ্ঠানের নাম ছাড়া)।
+- উত্তরবঙ্গের পাঠকের জন্য বাড়তি মূল্য যোগ করবে: এই এলাকার মানুষের জীবনে এর প্রভাব কী, কেন এটা তাদের জানা দরকার। তবে মূল তথ্যে নেই এমন কোনো তথ্য, সংখ্যা বা উদ্ধৃতি বানাবে না।
+- এই পোস্টের লেখার ধরন: {caption_style}
+- কোনো লেবেল ব্যবহার করবে না ("আপনার মতামত:", "বিস্তারিত:", "তথ্যসূত্র:" ইত্যাদি)। কমেন্ট, লাইক বা শেয়ার করতে বলবে না।
+- ক্যাপশনে কোনো হ্যাশট্যাগ, লিংক বা সূত্রের লাইন লিখবে না, এগুলো সিস্টেম নিজে যোগ করবে।
+- দৈর্ঘ্য: ৪০০-৯০০ অক্ষর, ২-৪টি ছোট অনুচ্ছেদ, অনুচ্ছেদের মাঝে একটি ফাঁকা লাইন।
 
 ফটোকার্ডের তথ্য (template ও headline_html):
 - template: "viral" | "breaking" | "inqilab_style" | "quote" | "general" (পূর্ববর্তী '{last_template or "কোনোটি নয়"}' থেকে ভিন্ন)
-- headline_html: ফটোকার্ডের জন্য অত্যন্ত আকর্ষণীয় ও সংক্ষিপ্ত (২-৩ লাইন) হেডলাইন। মূল শব্দগুচ্ছকে <span class="highlight">শব্দ</span> দিয়ে মার্ক করবে।
+- headline_html: ফটোকার্ডের জন্য নিজস্ব ভাষায় লেখা সংক্ষিপ্ত (২-৩ লাইন) হেডলাইন, মূল শিরোনাম হুবহু কপি করবে না। মূল শব্দগুচ্ছকে <span class="highlight">শব্দ</span> দিয়ে মার্ক করবে।
 - sub_headline: "{default_subhead}"
 
 নিচের JSON ফরম্যাটে সরাসরি উত্তর প্রদান করো (অন্য কোনো টেক্সট বা মার্কডাউন ছাড়া):
@@ -393,11 +443,7 @@ class AIEditor:
 """
 
         # Dynamic model selection with automatic discovery & robust fallbacks
-        models_to_try = [
-            "gemini-3.8-flash",
-            "gemini-3.1-flash-lite",
-            "gemini-flash-latest",
-        ]
+        models_to_try = list(GEMINI_MODELS)
         last_error = None
 
         for model_name in models_to_try:
@@ -421,8 +467,18 @@ class AIEditor:
                         raw_text = "\n".join(lines).strip()
 
                     data = json.loads(raw_text)
-                    if "fb_caption" in data and data["fb_caption"]:
-                        data["fb_caption"] = clean_fb_caption(data["fb_caption"])
+                    if not data.get("is_relevant", True):
+                        return data
+
+                    body = strip_footer(clean_fb_caption(data.get("fb_caption") or ""))
+                    overlap = copy_overlap_ratio(body, f"{title} {summary}")
+                    if len(body) < 150 or overlap > MAX_COPY_OVERLAP:
+                        logger.warning(f"AI caption rejected by originality check (len={len(body)}, copy overlap={overlap:.0%}). Retrying.")
+                        last_error = f"originality check failed (overlap {overlap:.0%})"
+                        prompt += f"\n\nআগের উত্তরটি মূল সংবাদের সাথে {overlap:.0%} মিলে গেছে বা খুব ছোট ছিল। এবার সম্পূর্ণ নিজের ভাষায়, ভিন্ন বাক্যগঠনে আবার লেখো।"
+                        continue
+                    data["fb_caption"] = f"{body}\n\nসূত্র: {source}\n\n{hashtags}"
+                    data["copy_overlap"] = round(overlap, 3)
 
                     # Enforce strict non-repetition: consecutive posts must never use the same template
                     chosen_tmpl = data.get("template", "breaking")
@@ -440,5 +496,7 @@ class AIEditor:
                         continue
                     break
 
-        logger.error(f"All Gemini models failed. Last error: {last_error}. Using fallback editor.")
-        return self.fallback_analyze(title, summary, source, district, upazila, is_viral=is_viral, is_international=is_international, recent_headlines=recent_headlines, last_template=last_template)
+        # Never fall back to the rule-based editor for publishing: it pastes the source article text,
+        # which is exactly what Meta demotes as unoriginal content. Skip this story instead.
+        logger.error(f"All Gemini models failed or produced copied text. Last error: {last_error}. Skipping candidate.")
+        return {"is_relevant": False, "reason": f"AI editor unavailable or caption not original ({last_error})", "fallback": True}

@@ -290,6 +290,8 @@ def publish_news_now(payload: Dict):
     analysis = editor.analyze_news(payload, recent_headlines=recent_headlines, last_template=last_tmpl)
     if not analysis:
         raise HTTPException(status_code=400, detail="AI সম্পাদক সংবাদটি প্রস্তুত করতে ব্যর্থ হয়েছে।")
+    if analysis.get("fallback") or not analysis.get("is_relevant", True):
+        raise HTTPException(status_code=400, detail=f"Not published: {analysis.get('reason', 'AI editor could not write an original caption')}")
 
     news_payload = {**payload, **analysis}
     if "template" in payload and payload["template"]:

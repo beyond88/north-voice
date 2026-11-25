@@ -3,6 +3,7 @@ import re
 import logging
 from typing import Dict, Tuple, List
 from src.db import extract_story_tokens
+from src.ai_editor import copy_overlap_ratio, MAX_COPY_OVERLAP
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,21 @@ class PostSpamAuditor:
         if re.search(r"https?://(?!fb\.com)", caption):
             score += 40
             issues.append("External HTTP link found in main caption (causes Meta algorithm suppression)")
+
+        # Check 3b: Originality. Text copied from the source article is what Meta demotes as unoriginal.
+        source_text = f"{news_payload.get('title', '')} {news_payload.get('summary', '')}"
+        overlap = copy_overlap_ratio(caption, source_text)
+        if overlap > MAX_COPY_OVERLAP:
+            score += 60
+            issues.append(f"Caption copies the source article ({overlap:.0%} of 5-word phrases match)")
+
+        # Check 3c: Broken or spammy hashtags
+        if re.search(r"(?<!\S)#(?=\s|$)", caption):
+            score += 30
+            issues.append("Empty '#' hashtag in caption")
+        if len(re.findall(r"#\S+", caption)) > 4:
+            score += 20
+            issues.append("Too many hashtags (> 4)")
 
         # Check 4: Emoji Spam Check
         emoji_count = len(re.findall(r"[\U00010000-\U0010ffff]", caption))

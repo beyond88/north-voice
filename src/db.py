@@ -3,7 +3,7 @@ import os
 import difflib
 import hashlib
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple
 from supabase import create_client, Client
 from src.config import SUPABASE_URL, SUPABASE_KEY
@@ -220,6 +220,20 @@ class Database:
             except Exception:
                 pass
         return None
+
+    def count_posts_since(self, hours: float = 24.0) -> int:
+        """Number of distinct Facebook posts published in the last `hours` hours (0 if unknown)."""
+        if not self.client:
+            return 0
+        try:
+            since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+            res = self.client.table("posts").select("fb_post_id").gte("created_at", since).execute()
+            ids = {(r.get("fb_post_id") or "").split("|tmpl:")[0] for r in (res.data or [])}
+            ids.discard("")
+            return len(ids)
+        except Exception as e:
+            logger.debug(f"Could not count recent posts: {e}")
+            return 0
 
     def save_post(self, news_url: str, headline: str, fb_post_id: str = "dry_run", template: Optional[str] = None) -> bool:
         """Records a successful post in Supabase with template metadata and local fallback cache."""
