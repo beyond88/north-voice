@@ -1,0 +1,29 @@
+name: Dry-run sample post (temporary)
+on:
+  push:
+    branches: [claude/dry-run-sample]
+permissions:
+  contents: read
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11', cache: 'pip' }
+      - run: pip install -r requirements.txt && playwright install chromium --with-deps
+      - name: Build sample post (no Facebook, no DB writes)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          DRY_RUN: 'true'
+        run: python scripts/dry_run_sample.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sample-post
+          path: |
+            output/*.png
+            output/sample_*.json
