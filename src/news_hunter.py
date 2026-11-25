@@ -1,4 +1,5 @@
 import re
+import unicodedata
 import datetime
 import logging
 from email.utils import parsedate_to_datetime
@@ -7,9 +8,18 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 import feedparser
 from bs4 import BeautifulSoup
-from src.config import RSS_FEEDS, NORTH_BENGAL_DISTRICTS, NORTH_BENGAL_UPAZILAS
+from src.config import RSS_FEEDS, NORTH_BENGAL_DISTRICTS, NORTH_BENGAL_UPAZILAS, ALLOW_NATIONAL_VIRAL
 
 logger = logging.getLogger(__name__)
+
+def bn_normalize(text: str) -> str:
+    """NFC-normalise Bangla text and compose nukta letters (ড় ঢ় য়) into single code points."""
+    if not text:
+        return ""
+    text = unicodedata.normalize("NFC", text)
+    return (text.replace("\u09a1\u09bc", "\u09dc")
+                .replace("\u09a2\u09bc", "\u09dd")
+                .replace("\u09af\u09bc", "\u09df"))
 
 def is_valid_image_url(url: Optional[str]) -> bool:
     """Verifies that an image URL is a real photograph and not a search engine icon, site logo, or placeholder."""
@@ -165,12 +175,27 @@ class NewsHunter:
 
         return resolved_url, og_img, article_text
 
+    # Upazila names that are also common words or places outside North Bengal.
+    # They only count when the parent district is named too ("উপজেলা"/"থানা" alone was not enough:
+    # it let stories from Narail, Gazipur, Dhaka etc. through).
     AMBIGUOUS_UPAZILAS = {
-        "বিরল": ["দিনাজপুর", "উপজেলা", "থানা"],
-        "বেড়া": ["পাবনা", "উপজেলা", "থানা"],
-        "কিশোরগঞ্জ": ["নীলফামারী", "উপজেলা", "থানা"],
-        "শেরপুর": ["বগুড়া", "বগুড়ার"],
-        "ফরিদপুর": ["পাবনা", "পাবনার"]
+        "বিরল": ["দিনাজপুর"],
+        "বেড়া": ["পাবনা"],
+        "কিশোরগঞ্জ": ["নীলফামারী"],
+        "শেরপুর": ["বগুড়া"],
+        "ফরিদপুর": ["পাবনা"],
+        "কালীগঞ্জ": ["লালমনিরহাট"],
+        "নবাবগঞ্জ": ["দিনাজপুর"],
+        "দুর্গাপুর": ["রাজশাহী"],
+        "শাহজাদপুর": ["সিরাজগঞ্জ"],
+        "হরিপুর": ["ঠাকুরগাঁও"],
+        "মোহনপুর": ["রাজশাহী"],
+        "রায়গঞ্জ": ["সিরাজগঞ্জ"],
+        "কালাই": ["জয়পুরহাট"],
+        "লালপুর": ["নাটোর"],
+        "মান্দা": ["নওগাঁ"],
+        "বোদা": ["পঞ্চগড়"],
+        "সাঘাটা": ["গাইবান্ধা"],
     }
 
     INTERNATIONAL_COUNTRIES = [
@@ -213,18 +238,21 @@ class NewsHunter:
         Scans text for both grassroots Upazilas/Thanas and Districts.
         Returns (district, upazila).
         """
+        # Bangla letters like ড় / য় can be typed as one code point or as base + nukta.
+        # Normalise both sides so "বগুড়া" in a feed matches "বগুড়া" in config.
+        text = bn_normalize(text)
         # First priority: Check all 125 Upazilas with context disambiguation
         for upazila, district in self.upazila_to_district.items():
-            if upazila in text:
+            if bn_normalize(upazila) in text:
                 if upazila in self.AMBIGUOUS_UPAZILAS:
                     required_context = self.AMBIGUOUS_UPAZILAS[upazila]
-                    if not any(req in text for req in required_context):
+                    if not any(bn_normalize(req) in text for req in required_context):
                         continue
                 return district, upazila
 
         # Second priority: Check district names
         for district in self.districts:
-            if district in text:
+            if bn_normalize(district) in text:
                 return district, None
 
         return None, None
@@ -325,7 +353,7 @@ class NewsHunter:
             "আলোড়ন", "ফেসবুক পোস্ট ঘিরে", "ফেসবুকে পোস্ট", "ভিডিও ছড়িয়ে", "ভিডিও ছড়িয়ে পড়ায়", "কমেন্টের ঝড়"
         ]
         if item.get("is_viral") or any(vt in text for vt in viral_triggers):
-            score += 40
+            score += 10
 
         # 7. Low-Value Celebrity Fluff / Gossip Penalty (-50 pts)
         # Guarantees North Voice maintains serious journalistic integrity over trivial celebrity gossip
@@ -407,14 +435,20 @@ class NewsHunter:
                 ]
                 is_viral = any(vt in text_lower for vt in viral_triggers)
 
-                # Filter for location relevance (North Bengal), Whole BD Viral Topics, or International Viral News
-                matched_district, matched_upazila = self.match_location(full_text)
+                # Location relevance: the place must be in the headline or the lead, not just
+                # mentioned somewhere deep in a national story.
+                lead_text = f"{title} {full_body[:400]}"
+                matched_district, matched_upazila = self.match_location(lead_text)
 
                 is_intl = False
                 if not matched_district and not matched_upazila:
                     is_intl = self.is_international(full_text)
 
-                if matched_district or matched_upazila or is_viral or is_intl:
+                is_local = bool(matched_district or matched_upazila)
+                if not is_local and not ALLOW_NATIONAL_VIRAL:
+                    continue
+
+                if is_local or is_viral or is_intl:
                     image_url = self.extract_image(entry)
                     if matched_district:
                         assigned_district = matched_district

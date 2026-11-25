@@ -3,7 +3,14 @@ import glob
 import time
 import logging
 import sys
-from src.config import MAX_POSTS_PER_RUN, DRY_RUN
+from datetime import datetime, timezone, timedelta
+from src.config import (
+    MAX_POSTS_PER_RUN, DRY_RUN, POST_WINDOW_START_HOUR_BD, POST_WINDOW_END_HOUR_BD,
+    MAX_POSTS_PER_DAY, MIN_MINUTES_BETWEEN_POSTS,
+)
+
+BD_TZ = timezone(timedelta(hours=6))
+NON_LOCAL_DISTRICTS = {"আন্তর্জাতিক", "সারা দেশ"}
 from src.db import Database, is_duplicate_story
 from src.news_hunter import NewsHunter, is_valid_image_url
 from src.ai_editor import AIEditor, clean_fb_caption
@@ -30,11 +37,21 @@ def run_agent():
     generator = CardGenerator()
     poster = FacebookPoster()
 
-    # Step 0: Safe Posting Interval Audit (Anti-Spam Cooldown)
-    # Meta / Facebook algorithms flag accounts posting < 25 mins apart as automated spam/bots.
+    # Step 0: Pacing. Post only when North Bengal readers are awake, keep a real gap between posts,
+    # and cap the day: a few strong local posts get more reach per post than a constant stream.
+    bd_hour = datetime.now(BD_TZ).hour
+    if not (POST_WINDOW_START_HOUR_BD <= bd_hour < POST_WINDOW_END_HOUR_BD):
+        logger.info(f"🌙 Outside posting window ({POST_WINDOW_START_HOUR_BD}:00-{POST_WINDOW_END_HOUR_BD}:00 BD time, now {bd_hour}:xx). Skipping run.")
+        return
+
     mins_since_last = db.get_minutes_since_last_post()
-    if mins_since_last is not None and mins_since_last < 25.0:
-        logger.info(f"⏳ Safe Posting Interval Cooldown: Last post published {mins_since_last:.1f} mins ago (< 25 min). Skipping to protect page health against Facebook spam flags.")
+    if mins_since_last is not None and mins_since_last < MIN_MINUTES_BETWEEN_POSTS:
+        logger.info(f"⏳ Last post was {mins_since_last:.1f} mins ago (< {MIN_MINUTES_BETWEEN_POSTS:.0f} min). Skipping run.")
+        return
+
+    posts_today = db.count_posts_since(24)
+    if posts_today >= MAX_POSTS_PER_DAY:
+        logger.info(f"📅 Daily cap reached ({posts_today}/{MAX_POSTS_PER_DAY} posts in last 24h). Skipping run.")
         return
 
     # Step 1: Hunt for fresh North Bengal news across all National & Upazila feeds
@@ -92,6 +109,12 @@ def run_agent():
 
         upazila = item.get("upazila")
         district = item.get("district", "উত্তরবঙ্গ")
+
+        # North Voice is a North Bengal page: national/international stories are already covered by
+        # bigger pages, and reposting them is what gets the page treated as an unoriginal aggregator.
+        if district in NON_LOCAL_DISTRICTS or item.get("is_international"):
+            logger.debug(f"Skipping non-local story: {title[:50]}")
+            continue
         loc_display = f"{upazila}, {district}" if upazila else district
 
         logger.info(f"Processing candidate [Score: {item.get('reach_score', 0):.1f}]: {title[:50]} ({loc_display})...")
@@ -135,6 +158,11 @@ def run_agent():
         # Step 4.2: AI Editing & Formatting (Gemini 2.0/1.5 Flash with multi-stage storyline intelligence & 5-template shuffling)
         logger.info("Passing verified news to Gemini AI Editor with storyline tracking & template rotation...")
         analysis = editor.analyze_news(item, recent_headlines=recent_headlines, last_template=last_template)
+
+        if analysis and analysis.get("fallback"):
+            logger.warning(f"Skipping '{title[:40]}': {analysis.get('reason')}")
+            failed_attempts += 1
+            continue
 
         if not analysis or not analysis.get("is_relevant", True):
             reason = analysis.get("reason", "low priority") if analysis else "skipped"

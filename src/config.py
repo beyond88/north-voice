@@ -17,6 +17,20 @@ FB_PAGE_ACCESS_TOKEN = os.getenv("FB_PAGE_ACCESS_TOKEN", "")
 # Runtime Flags
 DRY_RUN = os.getenv("DRY_RUN", "false").lower() in ("true", "1", "yes") or not FB_PAGE_ACCESS_TOKEN
 MAX_POSTS_PER_RUN = int(os.getenv("MAX_POSTS_PER_RUN", "1"))
+
+# Organic reach guardrails
+# Off-niche national "viral" and international stories were what the page mostly posted, and they
+# are already covered by much bigger pages, so Meta treats our versions as unoriginal reposts.
+# Keep them off unless explicitly re-enabled.
+ALLOW_NATIONAL_VIRAL = os.getenv("ALLOW_NATIONAL_VIRAL", "false").lower() in ("true", "1", "yes")
+# Only publish while North Bengal readers are awake (Bangladesh time, 24h clock, end exclusive).
+POST_WINDOW_START_HOUR_BD = int(os.getenv("POST_WINDOW_START_HOUR_BD", "8"))
+POST_WINDOW_END_HOUR_BD = int(os.getenv("POST_WINDOW_END_HOUR_BD", "23"))
+# Fewer, better local posts beat a constant stream of aggregated news.
+MAX_POSTS_PER_DAY = int(os.getenv("MAX_POSTS_PER_DAY", "6"))
+MIN_MINUTES_BETWEEN_POSTS = float(os.getenv("MIN_MINUTES_BETWEEN_POSTS", "90"))
+# Gemini models tried in order (comma separated). Must be names valid for the google-genai SDK.
+GEMINI_MODELS = [m.strip() for m in os.getenv("GEMINI_MODELS", "gemini-3.8-flash,gemini-3.1-flash-lite").split(",") if m.strip()]
 DEBUG = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
 
 # North Bengal Districts (All 16 Districts across Rangpur & Rajshahi Divisions)
@@ -98,7 +112,11 @@ def build_viral_feeds():
 VIRAL_FEEDS = build_viral_feeds()
 
 # Combined 360-Degree Master RSS Feeds covering National Media, TV Channels, Local Dailies, All Upazilas, and Viral Topics
-RSS_FEEDS = DIRECT_PORTAL_FEEDS + build_district_feeds() + build_upazila_feeds() + VIRAL_FEEDS
+# Local district/upazila feeds first. National portals are still scanned, but NewsHunter only keeps
+# stories whose headline/lead is actually about a North Bengal place (see news_hunter.py).
+RSS_FEEDS = build_district_feeds() + build_upazila_feeds() + DIRECT_PORTAL_FEEDS
+if ALLOW_NATIONAL_VIRAL:
+    RSS_FEEDS += VIRAL_FEEDS
 
 # Brand Details
 BRAND_NAME = "North Voice"
